@@ -25,7 +25,8 @@ $ cd /path/to/rosetta_source
 $ ./external/scons-local/scons.py bin mode=release
 ```
 On multi-core systems you can supply e.g. ``` -j24 ``` to SCons to use multiple threads (24 in this example).
-In case of any problems here, please see the 
+In case of any problems in this step, please see the build documentation at https://www.rosettacommons.org/docs/latest/build_documentation/Build-Documentation.
+Note however, that some paths etc. might be different to those on your systems, as that page refers to more recent versions.
 
 3. Apply the patch and recompile.
 	1. Edit patch_rosetta3.4.sh.
@@ -39,8 +40,8 @@ In case of any problems here, please see the
 		```
 	3. Compile patched version of Rosetta
 		```sh
-		cd /path/to/rosetta_source
-		scons bin mode=release
+		$ cd /path/to/rosetta_source
+		$ ./external/scons-local/scons.py bin mode=release
 		```
 		
 
