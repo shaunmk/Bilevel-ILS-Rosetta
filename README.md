@@ -32,7 +32,7 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 3. Apply the patch and recompile.
 	1. Edit patch_rosetta3.4.sh.
 	
-	Change the value of the ```SRC_DIR_TO_PATCH``` variable to contain the full path to the ```rosetta_source``` directory you downloaded in step 1.
+		Change the value of the ```SRC_DIR_TO_PATCH``` variable to contain the full path to the ```rosetta_source``` directory you downloaded in step 1.
 	
 	2. Run patch
 		```sh
