@@ -25,7 +25,9 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 	$ cd /path/to/rosetta_source
 	$ ./external/scons-local/scons.py bin mode=release
 	```
-	The compilation process can be quite slow, but on multi-core systems you can supply e.g. ``` -j24 ``` to SCons to use multiple threads (24 in this example). Successful compilation is usually indicated by
+
+	Optionally, you can specify the build target as ```bin/AbinitioRelax``` to only compile everything necessary for that application.
+	The compilation process can be quite slow, but on multi-core systems you can supply e.g. ``` -j24 ``` to get SCons to use multiple threads (24 in this example). Successful compilation is usually indicated by
 	```
 	scons: done building targets.
 	```
@@ -34,25 +36,38 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 	Note however, that some paths etc. might be different to those on your system, as that page refers to more recent versions of Rosetta.
 
 3. Apply the patch and recompile.
-	1. Edit patch_rosetta3.4.sh.
 	
-		Change the value of the ```SRC_DIR_TO_PATCH``` variable to contain the full path to the ```rosetta_source``` directory you downloaded in step 1.
-	
-	2. Run patch
+	1. Run patching script
+		The script ```patch_rosetta3.4``` handles the patch process. Supply it with the full path to the ```rosetta_source``` directory you downloaded in step 1.
+
 		```sh
 		$ cd /path/to/Bilevel-ILS-Rosetta
-		$ ./patch_rosetta3.4.sh
+		$ ./patch_rosetta3.4.sh /path/to/rosetta_source
 		```
-	3. Compile patched version of Rosetta
+		The script will do some simple checks to ensure that the patch can be applied. 
+		
+	2. Compile patched version of Rosetta
+		Once the patch has succeeded, you will need to recompile the patched Rosetta source tree. The commands are the same:
+		
 		```sh
 		$ cd /path/to/rosetta_source
 		$ ./external/scons-local/scons.py bin mode=release
 		```
-4. Test
+
+4. Test (TODO)
 
 	Sample input and output data are available in ```test/```. These were generated on a Linux system.
 	
 	Modify ```options.txt``` to correctly indicate the paths to your patched ```rosetta_source``` and ```rosetta_database``` directories.
 
+### Common issues
+By default, SCons will try to use whatever ```g++``` refers to in your shell. On standard configurations of MacOS for example, this is usually Apple's LLVM compiler. To change the default, edit the file ```/path/to/rosetta_source/tools/build/basic.options```.
+
+Another common error when running SCons is e.g.
+```
+### KeyError: "Unknown version number 4.8 for compiler 'gcc'"
+```
+In this case, you will need to let SCons know about this version of the compiler. Edit the file ```/path/to/rosetta_source/tools/build/options.settings``` and add the correct version (in this example, "4.8") to the list of GCC versions provided.
+
 ### Note for Mac users
-I have only tested this on OSX versions <= 10.9.5. I have found that I need to use rather old compilers (llvm-gcc-4.2). I did try with Apple's newer LLVM compilers (v6.0), but this did not work. I suspect it might be down to adjusting compiler options - you may be able to get ideas from the configuration files for newer versions of Rosetta, which do work fine on up-to-date MacOS systems. This is just something I never spent much time on, but please let me know if you are able to get it to work!
+I have only tested this on OSX versions <= 10.9.5. I have found that I need to use rather old compilers (llvm-gcc-4.2, available from MacPorts as apple-gcc42). I did try with Apple's newer LLVM compilers (v6.0), but this did not work. I suspect it might be down to adjusting compiler options in ```/path/to/rosetta_source/tools/build/basic.settings``` - you may be able to get ideas from the version of this file in newer releases of Rosetta, which do work fine on up-to-date MacOS systems. All my production work was done on Linux with GCC, so this is just something I never spent much time on. Please let me know if you are able to get it to work!
