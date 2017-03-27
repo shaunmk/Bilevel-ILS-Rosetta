@@ -30,8 +30,8 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 	scons: done building targets.
 	```
 	
-	In case of any problems with this step, please see the build documentation at https://www.rosettacommons.org/docs/latest/build_documentation/Build-Documentation.
-	Note however, that some paths etc. might be different to those on your systems, as that page refers to more recent versions of Rosetta.
+	In case of any problems with this step, please see the build documentation and troubleshooting information at https://www.rosettacommons.org/docs/latest/build_documentation/Build-Documentation.
+	Note however, that some paths etc. might be different to those on your system, as that page refers to more recent versions of Rosetta.
 
 3. Apply the patch and recompile.
 	1. Edit patch_rosetta3.4.sh.
