@@ -25,10 +25,11 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 	$ cd /path/to/rosetta_source
 	$ ./external/scons-local/scons.py bin mode=release
 	```
-	The compilation process can be quite slow, but on multi-core systems you can supply e.g. ``` -j24 ``` to SCons to use multiple threads (24 in this example). Successful compilation is indicated by
+	The compilation process can be quite slow, but on multi-core systems you can supply e.g. ``` -j24 ``` to SCons to use multiple threads (24 in this example). Successful compilation is usually indicated by
 	```
 	scons: done building targets.
 	```
+	
 	In case of any problems with this step, please see the build documentation at https://www.rosettacommons.org/docs/latest/build_documentation/Build-Documentation.
 	Note however, that some paths etc. might be different to those on your systems, as that page refers to more recent versions of Rosetta.
 
