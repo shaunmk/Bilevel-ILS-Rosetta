@@ -37,7 +37,7 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 
 3. Apply the patch and recompile.
 	
-	1. Run patching script
+	1. Run patching script.   
 		The script ```patch_rosetta3.4``` handles the patch process. Supply it with the full path to the ```rosetta_source``` directory you downloaded in step 1.
 
 		```sh
@@ -46,7 +46,7 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 		```
 		The script will do some simple checks to ensure that the patch can be applied. 
 		
-	2. Compile patched version of Rosetta
+	2. Compile patched version of Rosetta.   
 		Once the patch has succeeded, you will need to recompile the patched Rosetta source tree. The commands are the same:
 		
 		```sh
