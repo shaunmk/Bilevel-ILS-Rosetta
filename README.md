@@ -10,17 +10,26 @@ Patch for the AbinitioRelax application in the Rosetta macromolecular modelling 
  - patch (tested with GNU patch v2.7.1 on Linux and patch v2.5.8 on OSX)
  - Linux (preferred) or Mac OSX (see Note for Mac users below)
 
-# IMPORTANT
+## IMPORTANT
 This patch modifies the source code for the AbinitioRelax application, as well as some core Rosetta classes. I have not tested and cannot guarantee functionality of other applications in the Rosetta suite after the patch has been applied. I recommend that you keep the patched source tree separate from any other installations of Rosetta that you might have.
 
-# Install
-1. Obtain Rosetta source distribution and database (version 3.4 ONLY)
+# Installation instructions
+1. Obtain Rosetta source distribution and database (version 3.4)
 
 	You need to obtain a Rosetta licence from https://www.rosettacommons.org/software and follow the instructions to download Rosetta. Make sure to download version 3.4, as other versions will not work. You will need at least the two downloads marked "required" (Source code and database).
 
-2. Make sure you can compile and run Rosetta v3.4 without patching.
+2. Apply the patch.   
+	The script ```patch_rosetta3.4``` handles the patch process. Supply it with the full path to the ```rosetta_source``` directory you downloaded in step 1.
 
-	This step is to exclude any possible errors that might arise due to problems with Rosetta in combination with your specific system setup. You need to be able to successfully compile Rosetta before the patch can work. Rosetta supplies a version of SCons, a build system used for compilation.
+	```sh
+	$ cd /path/to/Bilevel-ILS-Rosetta
+	$ ./patch_rosetta3.4.sh /path/to/rosetta_source
+	```
+	The script will do some simple checks to ensure that the patch can be applied. 
+		
+3. Compile patched version of Rosetta.   
+	Once the patch has succeeded, you will need to compile the patched Rosetta source tree. Rosetta comes with a version of SCons, a Python-based build system.
+
 	```sh
 	$ cd /path/to/rosetta_source
 	$ ./external/scons-local/scons.py bin mode=release
@@ -31,28 +40,6 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 	```
 	scons: done building targets.
 	```
-	
-	In case of any problems with this step, please see the build documentation and troubleshooting information at https://www.rosettacommons.org/docs/latest/build_documentation/Build-Documentation.
-	Note however, that some paths etc. might be different to those on your system, as that page refers to more recent versions of Rosetta.
-
-3. Apply the patch and recompile.
-	
-	1. Run patching script.   
-		The script ```patch_rosetta3.4``` handles the patch process. Supply it with the full path to the ```rosetta_source``` directory you downloaded in step 1.
-
-		```sh
-		$ cd /path/to/Bilevel-ILS-Rosetta
-		$ ./patch_rosetta3.4.sh /path/to/rosetta_source
-		```
-		The script will do some simple checks to ensure that the patch can be applied. 
-		
-	2. Compile patched version of Rosetta.   
-		Once the patch has succeeded, you will need to recompile the patched Rosetta source tree. The commands are the same:
-		
-		```sh
-		$ cd /path/to/rosetta_source
-		$ ./external/scons-local/scons.py bin mode=release
-		```
 
 4. Test (TODO)
 
