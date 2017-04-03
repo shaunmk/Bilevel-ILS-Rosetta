@@ -48,13 +48,13 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 	Modify ```options.txt``` to correctly indicate the paths to your patched ```rosetta_source``` and ```rosetta_database``` directories.
 
 ### Common issues
-By default, SCons will try to use whatever ```g++``` refers to in your shell. On standard configurations of MacOS for example, this is usually Apple's LLVM compiler. To change the default, edit the file ```/path/to/rosetta_source/tools/build/basic.options```.
+By default, SCons will try to use whatever ```gcc``` refers to in your shell. On standard configurations of MacOS for example, this is usually Apple's LLVM compiler. To change the default, edit the file ```/path/to/rosetta_source/tools/build/basic.options```.
 
 Another common error when running SCons is e.g.
 ```
 ### KeyError: "Unknown version number 4.8 for compiler 'gcc'"
 ```
-In this case, you will need to let SCons know about this version of the compiler. Edit the file ```/path/to/rosetta_source/tools/build/options.settings``` and add the correct version (in this example, "4.8") to the list of GCC versions provided.
+In this case, you will need to let SCons know about this version of GCC. Edit the file ```/path/to/rosetta_source/tools/build/options.settings``` and add the correct version (in this example, "4.8") to the list of GCC versions provided.
 
 ### Note for Mac users
 I have only tested this on OSX versions <= 10.9.5. I have found that I need to use rather old compilers (llvm-gcc-4.2, available from MacPorts as apple-gcc42). I did try with Apple's newer LLVM compilers (v6.0), but this did not work. I suspect it might be down to adjusting compiler options in ```/path/to/rosetta_source/tools/build/basic.settings``` - you may be able to get ideas from the version of this file in newer releases of Rosetta, which do work fine on up-to-date MacOS systems. All my production work was done on Linux with GCC, so this is just something I never spent much time on. Please let me know if you are able to get it to work!
