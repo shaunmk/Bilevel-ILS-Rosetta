@@ -71,9 +71,10 @@ Another common error when running SCons is e.g.
 In this case, you will need to let SCons know about this version of GCC. Edit the file ```/path/to/rosetta_source/tools/build/options.settings``` and add the correct version (in this example, "4.8") to the list of GCC versions provided.
 
 ### Note for Mac users
-I have only tested this on OSX versions <= 10.9.5, using rather old compilers (llvm-gcc-4.2). You will need to be prepared to use this (or similar) compiler as your system default ```gcc```. If you do not want this, it is still possible to use a compiler other than the system default, but you will need to edit the build configuration files in ```/path/to/rosetta_source/tools/build```. Please raise an issue and let me know if you are trying to do this.
+I have only tested this on OSX versions <= 10.9.5, using rather old compilers (llvm-gcc-4.2). I think this version was current at the time Rosetta 3.4 was released, and I simply kept my system that way. The easiest way to get up and running is to use this (or similar) compiler as your system default ```gcc```. If you do not want this, it is still possible to use a compiler other than the system default. I was able to use ```gcc48``` from macports, but this requires editing the build configuration files in ```/path/to/rosetta_source/tools/build```. Please raise an issue and let me know if you are trying to do this, as it is a bit fiddly.
 
 I did try to build with Apple's newer LLVM compilers (v6.0), but this did not work. I suspect it might be down to adjusting compiler options in ```/path/to/rosetta_source/tools/build/basic.settings``` - you may be able to get ideas from the version of this file in newer releases of Rosetta, which do work fine on up-to-date MacOS systems. All my production work was done on Linux with GCC, so this is just something I never spent much time on. Please let me know if you are able to get it to work!
 
 # TODO
 - Table with all newly defined command-line options, what they do and their defaults
+- Known issues (e.g. nstruct must always be 1)
