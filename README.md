@@ -3,14 +3,14 @@ _Note: this page is a work in progress._
 
 Patch for the AbinitioRelax application in the Rosetta macromolecular modelling suite. Implements bilevel optimisation and Iterated Local Search (ILS) for improved conformational sampling.
 
-# Requirements
+# Prerequisites
  - Rosetta v3.4 source code (other versions will not work). This requires a license which is freely available to non-commercial users.
  - C++ compiler (tested with GCC 4.8.2 on Linux and llvm-gcc-4.2.1 on OSX)
  - Python 2 (for running SCons; tested with v2.7.5 on Linux and v2.7.12 on OSX)
  - patch (tested with GNU patch v2.7.1 on Linux and patch v2.5.8 on OSX)
  - Linux (preferred) or Mac OSX (see Note for Mac users below)
 
-## IMPORTANT
+# IMPORTANT
 This patch modifies the source code for the AbinitioRelax application, as well as some core Rosetta classes. I have not tested and cannot guarantee functionality of other applications in the Rosetta suite after the patch has been applied. I recommend that you keep the patched source tree separate from any other installations of Rosetta that you might have.
 
 # Installation instructions
