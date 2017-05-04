@@ -1,0 +1,54 @@
+# -*- mode:python;indent-tabs-mode:t;show-trailing-whitespace:t; -*-
+#
+# Project settings for rosetta sources
+# (c) Copyright Rosetta Commons Member Institutions.
+# (c) This file is part of the Rosetta software suite and is made available under license.
+# (c) The Rosetta software is developed by the contributing members of the Rosetta Commons.
+# (c) For more information, see http://www.rosettacommons.org. Questions about this can be
+# (c) addressed to University of Washington UW TechTransfer, email: license@u.washington.edu.
+
+#Do not modify this file and check it in.
+#First copy this file to pilot_apps.src.settings.my, then modify it to include the
+#sources of the pilot applications you want built.
+#Remember also to setup the devel.src.settings.my file to include any experimental
+#files that your pilot application needs.
+
+# Helpful hint:
+#  When using cmake/make_project.py, the .settings.my file will override the usual .settings
+#  file as the list of .cc files to compile.  It will not be checked into git (it is listed in .gitignore).
+#  When ready for primetime, move your apps into this .settings file.
+
+sources = {
+	"MGFUtils" : [
+		# "MGFContactMap",
+		# "MGFDistance",
+		"MGFGlobal",
+		"MGFArchive",
+		# "MGFPoseOutput",
+		# "MGFStrategyConfiguration",
+		],
+	"MGFUtils/MGFProtocol" : [
+	# 	"HillClimber",
+		"Solution",
+		"Evaluator",
+	# 	"Perturbator",
+		],
+}
+
+include_path = [ ]
+library_path = [ ]
+libraries	 = [ ]
+subprojects  = [
+	# "protocols.1", # SMK
+	# "core.5",
+	"core.4",
+	"core.3",
+	"core.2",
+	"core.1",
+	"basic",
+	"numeric",
+	"utility",
+	"ObjexxFCL",
+	"z",
+	"cppdb",
+        "sqlite3"]

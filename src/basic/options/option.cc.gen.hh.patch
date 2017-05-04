@@ -1,0 +1,46 @@
+566a567,574
+> option.add( basic::options::OptionKeys::abinitio::SMK_generate_trajectory, "SMK: generate trajectory data? Default is false." ).def(false);
+> option.add( basic::options::OptionKeys::abinitio::SMK_make_proportion_data, "SMK: generate torsion data for calculating proportion of torsion space used (Kandathil et al., 2016)? Requires a lot of disk space. Must be used together with SMK_generate_trajectory option. Default is false." ).def(false);
+> option.add( basic::options::OptionKeys::abinitio::SMK_trajectory_in_Lmins, "SMK: For global measures of sampling (Kandathil et al., 2016) when SMK_generate_trajectory is true; should points be collected every SMK_traj_interval accepted LMins? If false, data will be collected evey SMK_traj_interval accepted *moves*. Default is true." ).def(true);
+> option.add( basic::options::OptionKeys::abinitio::SMK_var_Linsert_length, "SMK: use variable-length inserts in Bilevel leader? Default is false." ).def(false);
+> option.add( basic::options::OptionKeys::abinitio::SMK_SS_dependent_LF, "SMK: use secondary structure-dependent inserts in Bilevel leader and follower? false means use the ILS procedure. Default is true." ).def(true);
+> option.add( basic::options::OptionKeys::abinitio::SMK_traj_interval, "SMK: trajectory point interval in terms of Local Minima or moves. Default is 100 i.e. output every 100th generated LMin, or output every 100 accepted moves. Must be used together with SMK_generate_trajectory." ).def(100);
+> option.add( basic::options::OptionKeys::abinitio::SMK_initial_temp, "SMK: Initial temperature for simulated annealing, in units of kT. Default is 10." ).def(10.0);
+> option.add( basic::options::OptionKeys::abinitio::SMK_final_temp, "SMK: Final temperature for simulated annealing, in units of kT. Default is 2." ).def(2.0);
+603c611,613
+< option.add( basic::options::OptionKeys::abinitio::optimize_cutpoints_using_kic, "optimize around cutpoints using kinematic relax" ).def(false);
+---
+> 
+> }
+> inline void add_rosetta_options_1( utility::options::OptionCollection &option ) {option.add( basic::options::OptionKeys::abinitio::optimize_cutpoints_using_kic, "optimize around cutpoints using kinematic relax" ).def(false);
+609,611c619
+< 
+< }
+< inline void add_rosetta_options_1( utility::options::OptionCollection &option ) {option.add( basic::options::OptionKeys::abinitio::SEP_score_scalling, "scalling factor" ).def(1.0);
+---
+> option.add( basic::options::OptionKeys::abinitio::SEP_score_scalling, "scalling factor" ).def(1.0);
+997a1006
+> option.add( basic::options::OptionKeys::mc::archive_info, "File specifying archiving strategies to be used. For details of format see protocols/moves/MonteCarlo.cc" );
+1209c1218,1220
+< option.add( basic::options::OptionKeys::lh::grid_angle_multiplier, "No description" ).def(2.5);
+---
+> 
+> }
+> inline void add_rosetta_options_2( utility::options::OptionCollection &option ) {option.add( basic::options::OptionKeys::lh::grid_angle_multiplier, "No description" ).def(2.5);
+1214,1216c1225
+< 
+< }
+< inline void add_rosetta_options_2( utility::options::OptionCollection &option ) {option.add( basic::options::OptionKeys::lh::max_emperor_lib_size, "No description" ).def(25);
+---
+> option.add( basic::options::OptionKeys::lh::max_emperor_lib_size, "No description" ).def(25);
+1816,1818d1824
+< option.add( basic::options::OptionKeys::DenovoProteinDesign::secondary_structure_file, "has fasta file format - describes secondary structure of desired target with H/C/E" );
+< option.add( basic::options::OptionKeys::DenovoProteinDesign::hydrophobic_polar_pattern, "has fasta file format - describes hydrophobic(B) polar(P) pattern" );
+< option.add( basic::options::OptionKeys::DenovoProteinDesign::use_template_sequence, "use the template pdbs sequence when creating starting structures" ).def(false);
+1821c1827,1830
+< inline void add_rosetta_options_3( utility::options::OptionCollection &option ) {option.add( basic::options::OptionKeys::DenovoProteinDesign::use_template_topology, "use templates phi/psi in loops and begin/end helix/sheet generate only template like starting structures" ).def(false);
+---
+> inline void add_rosetta_options_3( utility::options::OptionCollection &option ) {option.add( basic::options::OptionKeys::DenovoProteinDesign::secondary_structure_file, "has fasta file format - describes secondary structure of desired target with H/C/E" );
+> option.add( basic::options::OptionKeys::DenovoProteinDesign::hydrophobic_polar_pattern, "has fasta file format - describes hydrophobic(B) polar(P) pattern" );
+> option.add( basic::options::OptionKeys::DenovoProteinDesign::use_template_sequence, "use the template pdbs sequence when creating starting structures" ).def(false);
+> option.add( basic::options::OptionKeys::DenovoProteinDesign::use_template_topology, "use templates phi/psi in loops and begin/end helix/sheet generate only template like starting structures" ).def(false);

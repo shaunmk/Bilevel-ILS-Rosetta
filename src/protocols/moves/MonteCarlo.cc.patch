@@ -1,0 +1,1989 @@
+16a17,18
+> //#include <protocols/moves/SMKarchive.hh> //SMK
+> #include <MGFUtils/MGFGlobal.hh> //SMK
+19a22,25
+> #include <core/pose/util.hh> //SMK
+> #include <core/import_pose/import_pose.hh> //SMK
+> #include <core/scoring/rms_util.hh> //SMK
+> #include <core/util/SwitchResidueTypeSet.hh>//SMK
+29a36,37
+> #include <numeric/statistics.functions.hh> //SMK for mean, stdev etc
+> #include <numeric/util.cc> //SMK for mean, stdev etc
+36a45
+> #include <basic/options/keys/in.OptionKeys.gen.hh> //SMK
+40c49
+< 
+---
+> #include <utility/io/izstream.hh> //SMK
+51a61
+> static basic::Tracer SA_trace("protocols.moves.SimulatedAnneal"); //SMK tracer channel for SA-related stuff.
+52a63,65
+> static numeric::random::RandomGenerator smk_RG(42); // SMK the reason these should not be changed is that
+> // no two RNGs in the *entire application* should use the same seed.
+> // There is a check for this which will stop execution. I chose 42 for my RNG for reasons that should be obvious (h2g2)
+59a73,74
+> 
+> 
+67a83
+> 	LMin_temperature( src.LMin_temperature),//SMK
+81,82c97,116
+< 	check_frequency_( src.check_frequency_ )
+< {
+---
+> 	check_frequency_( src.check_frequency_ ),
+> 	InitialTemp(src.InitialTemp),	//SMK
+> 	FinalTemp(src.FinalTemp),		//SMK
+> 	n_loopres_in_insert(src.n_loopres_in_insert),//SMK
+> 	CurrentLoopID(0), //SMK this is 0-indexed
+> //	mc_archive(src.mc_archive), //SMK
+> 	Archives(src.Archives), //SMK
+> 	bGenerateTraj(src.bGenerateTraj), //SMK
+> 	abinitio_increase_cycles(src.abinitio_increase_cycles), //SMK
+> 	FcurrentHillclimbAccepts(src.FcurrentHillclimbAccepts), //SMK
+> 	Fhillclimb_accepts(src.Fhillclimb_accepts) //SMK
+> //	start_found(src.start_found), //SMK
+> //	end_found(src.end_found) //SMK
+> {
+> 	LMin = new Pose();//SMK
+> 	LMin_score = 0.0; //same as for last_accepted_score_ SMK
+> 	get_native_pose();
+> //	test_rmsd_calc(*native);
+> 	initialise_SMK_counters();
+> //	initialise_archive_conditions();
+88,90c122,124
+< 	Pose const & init_pose, // PoseCOP init_pose,
+< 	ScoreFunction const & scorefxn, // ScoreFunctionCOP scorefxn,
+< 	Real const temperature
+---
+> 		Pose const & init_pose, // PoseCOP init_pose,
+> 		ScoreFunction const & scorefxn, // ScoreFunctionCOP scorefxn,
+> 		Real const temperature
+92a127
+> 	LMin_temperature(temperature),//SMK
+100c135,151
+< 	heat_after_cycles_( 150 )
+---
+> 	heat_after_cycles_( 50 ),
+> 	NumAccepts( 0 ),     //SMK
+> 	NumOfPDBs( 0 ),     //SMK
+> 	n_loops( 0 ),       //SMK
+> 	// n_unfolds( 0 ),     //SMK
+> 	TrajInterval( 100 ), //SMK
+> 	//    n_accepts_since_last_unfold( 0 ), //SMK
+> 	//    IsLeader( true ),	//SMK, default value
+> 	TrialNumber( 0 ),	//SMK
+> 	InitialTemp(10.0),	//SMK
+> 	FinalTemp(2.0),		//SMK
+> 	n_loopres_in_insert(0), //SMK
+> 	CurrentLoopID(0), //SMK this is 0-indexed
+> 	bGenerateTraj(false), //SMK
+> 	abinitio_increase_cycles(1.0) //SMK
+> //	start_found(false), //SMK
+> //	end_found(false)	//SMK
+109a161,188
+> 
+> 	//SMK BEGIN
+> 	LMin = new Pose();
+> 	LMin_score = 0.0; //same as for last_accepted_score_
+> 	NumOfResidues = init_pose.n_residue();//SMK
+> 	get_native_pose();
+> //	test_rmsd_calc(*native);
+> 	initialise_SMK_counters();
+> //	initialise_archive_conditions();
+> 
+> 	//Make archives
+> 	this->create_archives_from_cmdline();
+> 
+> 	/// allocate and initialise samplingfrequencies.
+> 	samplingfrequencies = new Size * [NumOfResidues];
+> 
+> 	for (Size ip = 0; ip < NumOfResidues; ip++) //for each residue
+> 	{
+> 		samplingfrequencies[ip] = new Size [4];
+> 		for (Size jq = 0; jq<4; jq++)//4 stages
+> 		{
+> 			samplingfrequencies[ip][jq] = 0;
+> 		}
+> 	}
+> 
+> 	get_loops_from_psipred( init_pose );
+> 
+> 	///SMK END
+113,114c192,193
+< 	ScoreFunction const & scorefxn, // ScoreFunctionCOP scorefxn,
+< 	Real const temperature
+---
+> 		ScoreFunction const & scorefxn, // ScoreFunctionCOP scorefxn,
+> 		Real const temperature
+116a196
+> 	LMin_temperature(temperature),//SMK
+124c204,220
+< 	heat_after_cycles_( 150 )
+---
+> 	heat_after_cycles_( 50 ),
+> 	NumAccepts( 0 ),  ///SMK
+> 	NumOfPDBs( 0 ),	//SMK
+> 	n_loops( 0 ),       //SMK
+> 	// n_unfolds( 0 ),     //SMK
+> 	TrajInterval( 100 ), //SMK
+> 	//    n_accepts_since_last_unfold( 0 ), //SMK
+> 	//        IsLeader( true ),	//SMK, default value
+> 	TrialNumber( 0 ),	//SMK
+> 	InitialTemp(10.0),	//SMK
+> 	FinalTemp(2.0),		//SMK
+> 	n_loopres_in_insert(0), //SMK
+> 	CurrentLoopID(0), //SMK this is 0-indexed
+> 	bGenerateTraj(false), //SMK
+> 	abinitio_increase_cycles(1.0) //SMK
+> //	start_found(false), //SMK
+> //	end_found(false)	//SMK
+127a224,227
+> 	LMin = new Pose();//SMK
+> 	LMin_score = 0.0; //same as for last_accepted_score_ SMK
+> 	native_present=false;
+> 
+131a232,235
+> 	get_native_pose();
+> //	test_rmsd_calc(*native);
+> 	initialise_SMK_counters();
+> //	initialise_archive_conditions();
+136a241,293
+> 	//SMK BEGIN
+> 
+> 	if(bGenerateTraj){
+> 		//output acceptance frequencies per position
+> 		std::ofstream samplingfreqfile ("sampling_frequencies.txt");
+> 
+> 		for (Size pp = 0; pp < NumOfResidues; pp++)
+> 		{
+> 			for (Size pq = 0; pq < 4; pq++)
+> 			{
+> 				samplingfreqfile << samplingfrequencies[pp][pq]<<"\t";
+> 			}
+> 			samplingfreqfile<<std::endl;
+> 
+> 		}
+> 
+> 		samplingfreqfile.close();
+> 	}
+> 	if (bSS_dependent_LF){ // if bSS_dependent_LF is false, LoopSamplingFreqs is not (currently) calculated correctly.
+> 
+> 		if (this->bGenerateTraj) {
+> 			//output loop sampling frequencies
+> 
+> 			std::ofstream loopsamplingfile ("Loop_sampling_freqs.txt");
+> 			//header
+> 			loopsamplingfile << "LoopID\tStart\tEnd\tStage1\tStage2\tStage3\tStage4" << std::endl;
+> 
+> 			for (Size i=0; i< n_loops; i++) {
+> 
+> 				loopsamplingfile << i+1 << "\t" << LoopInfo[i][0] << "\t" << LoopInfo[i][1] << "\t";
+> 
+> 				for (Size j=0; j<4; j++) {
+> 					loopsamplingfile << LoopSamplingFreqs[i][j] << "\t";
+> 				}
+> 				loopsamplingfile << std::endl;
+> 			}
+> 			loopsamplingfile.close();
+> 		}
+> 	}
+> 
+> 	//SMK delete arrays; see header file for definitions
+> 	for (Size ix = 0; ix < NumOfResidues; ix++) {
+> 		delete[] samplingfrequencies[ix];
+> 	}
+> 	delete[] samplingfrequencies;
+> 
+> 	for (Size i=0; i< n_loops; i++) {
+> 		delete[] LoopSamplingFreqs[i];
+> 		delete[] LoopInfo[i];
+> 	}
+> 
+> 	LoopLengths.clear();
+> 	//SMK END
+142a300
+> 	TR << "lowest_score_pose cleared by clear_poses() !! " << std::endl; //SMK
+147,148c305,306
+< 	Pose const & init_pose,
+< 	ScoreFunction const & scorefxn
+---
+> 		Pose const & init_pose,
+> 		ScoreFunction const & scorefxn
+168c326,328
+< 	last_accepted_score_ = last_accepted_pose_->energies().total_energy();
+---
+> 	last_accepted_score_ = last_accepted_pose_->energies().total_energy(); //SMK not assigning score here...
+> //	TR << "lowest_score_pose set by recover_low(), energy = " << last_accepted_score_ << std::endl; //SMK
+> //	TR << "lowest_score_ not set, though this shouldn't be a problem." << std::endl;
+175,177c335,338
+< 	TR << "MC: " << temperature_
+< 	    << "  " << (*score_function_)(*last_accepted_pose_)
+< 	    << "  " << (*score_function_)(*lowest_score_pose_)
+---
+> 	TR << "temp\tsf(lap)\tsf(lsp)\tlas\tlows" << std::endl;//SMK << "MC: "
+> 	TR << temperature_
+> 			<< "  " << (*score_function_)(*last_accepted_pose_)
+> 			<< "  " << (*score_function_)(*lowest_score_pose_)
+180,184c341,345
+< 	    << "  " << last_accept_
+< 	    << "  " << autotemp_
+< 	    << "  " << quench_temp_
+< 	    << "  " << mc_accepted_
+< 	    << std::endl;
+---
+> 			<< "  " << last_accept_
+> 			<< "  " << autotemp_
+> 			<< "  " << quench_temp_
+> 			<< "  " << mc_accepted_
+> 			<< std::endl;
+194c355
+< 		last_accepted_score() << ' ' << lowest_score() << std::endl;
+---
+> 			last_accepted_score() << ' ' << lowest_score() << std::endl;
+226a388,390
+> 
+> 	TR << "score_function(scorefxn) called, lowest_score_pose rescored, lowest score = " << lowest_score_ << std::endl; //SMK
+> 
+298a463
+> 		TR << "lowest_score_pose set to last_accepted_pose in score_function(scorefxn), energy = " << lowest_score_ << std::endl; //SMK
+302a468,472
+> //SMK use this once near the start of ClassicAbinitio.
+> // We don't rescore any of the poses here.
+> void
+> MonteCarlo::stg4_score_function( ScoreFunction const & scorefxn ) {
+> 	using namespace scoring;
+303a474,475
+> 	stg4_score_function_ = scorefxn.clone();
+> }
+319,322c491,494
+< 	Pose & pose,
+< 	std::string const & move_type, // = unk
+< 	core::Real const proposal_density_ratio, // = 1
+< 	core::Real const inner_score_temperature_delta // = 0
+---
+> 		Pose & pose,
+> 		std::string const & move_type, // = unk
+> 		core::Real const proposal_density_ratio, // = 1
+> 		core::Real const inner_score_temperature_delta // = 0
+326c498
+< // Work around a current bug in the pose observer classes..
+---
+> 	// Work around a current bug in the pose observer classes..
+328c500
+< 	  if( update_boinc_ )
+---
+> 	if( update_boinc_ )
+331a504,517
+> 	//SMK MonteCarlo::boltzmann is always called to decide whether to accept a move.
+> 	//SMK if current score is less than last accepted, the move will be accepted in the else loop as MCA_accepted_score_beat_last
+> 	//SMK if score is higher, it can only get accepted thermally
+> 	//SMK this function is overloaded below; the other version is never called, apparently
+> 
+> 	//SMK BEGIN
+> 	//SMK this point is reached iff a move has been accepted (tentatively..).
+> 	//apply additional filters
+> 
+> 	//skip the bilevel stuff in stage 1 & 4
+> 	if (this->check_stage() == 1 || this->check_stage() == 4) // 25062014 NoStg4Bilevel
+> 	{
+> 		++TrialNumber;
+> 		counter_.count_trial( move_type );
+333,335c519,522
+< 	// score the pose:
+< 	Real const score( (*score_function_)( pose ) );
+< 	total_score_of_last_considered_pose_ = score; // save this for the TrialMover so that it may keep statistics.
+---
+> #ifdef BOINC_GRAPHICS
+> 		if( update_boinc_ )
+> 			boinc::Boinc::update_mc_trial_info( counter_.trial( move_type ), move_type );
+> #endif
+337,347c524
+< 	if ( false ) { // DEBUG
+< 		pose::Pose copy_pose;
+< 		copy_pose = pose;
+< 		copy_pose.energies().clear();
+< 		TR << "score copy" << std::endl;
+< 		Real const copy_score = (*score_function_)( copy_pose );
+< 		if ( std::abs( copy_score - score ) > 1E-6) {
+< 			TR << "Score discrepancy.  score: " << score << " vs copy score: " << copy_score << std::endl;
+< 			TR << "pose score: ";
+< 			pose.energies().total_energies().show_if_nonzero_weight( TR, score_function_->weights() );
+< 			TR << std::endl;
+---
+> 		score = ( (*score_function_)( pose ) ); //SMK
+349,351c526,693
+< 			TR << "copy score: ";
+< 			copy_pose.energies().total_energies().show_if_nonzero_weight( TR, score_function_->weights() );
+< 			TR << std::endl;
+---
+> 		total_score_of_last_considered_pose_ = score; // save this for the TrialMover so that it may keep statistics.
+> 
+> 
+> 		Real const boltz_factor = ( last_accepted_score() - score ) / temperature_ + inner_score_temperature_delta;
+> 		Real const probability = std::exp( std::min (40.0, std::max(-40.0,boltz_factor)) ) * proposal_density_ratio;
+> 		if ( probability < 1 ) {
+> 			if ( mc_RG.uniform() >= probability ) {
+> 				mc_accepted_ = MCA_rejected; // rejected
+> 
+> 				autotemp_reject();
+> 
+> 				evaluate_convergence_checks( pose, true /*reject*/, false /* not final*/ );
+> 				pose = ( *last_accepted_pose_ );
+> 				score = last_accepted_score_;
+> 
+> 				//TR << "Rejected with score = " << score
+> 				//	<< " ( prob = " << probability << " ) last_accepted scrore: " << last_accepted_score() << std::endl;
+> 				// score_function_->show( T("protocols.moves.MonteCarlo.boltzmann"), pose );
+> 
+> 				return false; // rejected
+> 
+> 			}
+> 			mc_accepted_ = MCA_accepted_thermally; // accepted thermally
+> 
+> 			//TR  << "thermally accepted with score = " << score
+> 			//	<< " ( prob = " << probability << " ) last_accepted scrore: " << last_accepted_score() << std::endl;
+> 			// score_function_->show( T("protocols.moves.MonteCarlo.boltzmann"), pose );
+> 
+> 		} else {
+> 
+> 			mc_accepted_ = MCA_accepted_score_beat_last; // energy is lower than last_accepted
+> 		}
+> 
+> 		if(bGenerateTraj){
+> 			//SMK increase NumAccepts and output stuff for trajectory generation.
+> 
+> 			NumAccepts++;    ///SMK
+> 			//Output to large files
+> 			OutputNonTrajStuff_stage( pose, stage_, archive_tag );
+> 
+> 			if (NumAccepts%TrajInterval==0)///SMK
+> 			{
+> 				output_trajectory_point_stage( pose, stage_, archive_tag );
+> 			}
+> 		}
+> 		counter_.count_accepted( move_type );
+> 		counter_.count_energy_drop( move_type, score - last_accepted_score() );
+> 		PROF_START( basic::MC_ACCEPT );
+> 		*last_accepted_pose_ = pose;
+> 		last_accepted_score_ = score;
+> 
+> #ifdef BOINC_GRAPHICS
+> 		if( update_boinc_ )
+> 			boinc::Boinc::update_graphics_last_accepted( pose, last_accepted_score() );
+> #endif
+> 
+> 		// 	last_accepted_pose_ = new Pose( *pose );
+> 
+> 		autotemp_accept();
+> 
+> 		if ( score < lowest_score() ) {
+> 			*lowest_score_pose_ = pose;
+> 			lowest_score_ = score;
+> 			//			evaluate_convergence_checks( pose, false /*not reject*/, false /*not final*/ );
+> 
+> #ifdef BOINC_GRAPHICS
+> 			if( update_boinc_ )
+> 				boinc::Boinc::update_graphics_low_energy( pose, lowest_score() );
+> #endif
+> 
+> 			//lowest_score_pose_ = new Pose ( pose );
+> 			mc_accepted_ = MCA_accepted_score_beat_low; //3;
+> //			TR << "lowest_score_pose set by main boltzmann() stage1-specific mod, energy = " << lowest_score_ << std::endl; //SMK
+> 		}
+> 		PROF_STOP( basic::MC_ACCEPT );
+> 
+> 		return true;
+> 	}//end of stage 1- and 4-specific mod
+> 
+> //	if (this->check_stage()==4)
+> //		TR.Warning << "WARNING: control reached unexpected point in stage 4! THIS SHOULD NOT HAPPEN!" << std::endl;
+> 	++TrialNumber;
+> 
+> 	set_changed_res(pose);
+> 
+> 	//TODO: You only need to calculate the condition numbers for each window once! Don't do this here.
+> 	Size const condition = analyse_insert_for_loops(pose);
+> 
+> //		TR << "----------------------" << std::endl;
+> //		TR<<"window_start: " << pose.window_start << ", Condition number " << condition << std::endl;
+> //
+> //	    // SMK DEBUG make sure changed_res is working as expected
+> //	    // VERY SLOW.
+> //	    TR << "pose.move_start = " << pose.move_start << "; Proposed move:"<< std::endl;
+> //	    for (std::vector<Size>::iterator it = changed_res.begin() ; it != changed_res.end(); ++it)
+> //	    {
+> //	    	TR<< (*it) <<" ";
+> //	    }
+> //	    TR<< std::endl;
+> //
+> //		for (std::vector<Size>::iterator it = changed_res.begin() ; it != changed_res.end(); ++it)
+> //		{
+> //			TR<< secstruct_smk[(*it)] <<" ";
+> //		}
+> //		TR<< std::endl;
+> //
+> //		TR << "(Move size " << changed_res.size() << ")" <<std::endl;
+> //		TR << "IsLeader = " << pose.Pose_IsLeader << std::endl;
+> 
+> 
+> ////	loops_involved, loops_spanned, loopstarts_found, loopends_found
+> //		std::cout << "loops_involved: "; if (!loops_involved.empty() )print_vector(loops_involved); else std::cout << std::endl;
+> //		std::cout << "loops_spanned: "; if (!loops_spanned.empty() )print_vector(loops_spanned); else std::cout << std::endl;
+> //		std::cout << "loopstarts_found: "; if (!loopstarts_found.empty() )print_vector(loopstarts_found); else std::cout << std::endl;
+> //		std::cout << "loopends_found: "; if (!loopends_found.empty() )print_vector(loopends_found); else std::cout << std::endl;
+> //		std::cout << std::endl;
+> 
+> 	/************************
+> 	 * BILEVEL PREFILTERS
+> 	 ************************
+> 	 */
+> 	//BILEVEL LEADER
+> 	if (pose.Pose_IsLeader)
+> 	{
+> 		bool L_prefilter_conditional;
+> 		if (bSS_dependent_LF){
+> 			//if all the residues in changed_res are loop residues, approve it as a high-level move
+> 			L_prefilter_conditional = make_L_filter (pose, condition);
+> 		} else {
+> 			// if not screening by SS, pre-accept any proposed move.
+> 			L_prefilter_conditional = true;
+> 			// there's a problem here: make_L_filter() sets CurrentLoopID which is used when incrementing LoopSamplingFreqs.
+> 			// This will be set to its default value of 0 in all cases, if bSS_dependent_LF is false.
+> 			// Ideally I'd like to record if multiple loops were changed; this is not easy in the current architecture.
+> 			// This would require a lot of edits to make_L_filter().
+> 		}
+> 		// eh... this seems better:
+> 		// bool const L_prefilter_conditional = bSS_dependent_LF ? make_L_filter(pose, condition) : true;
+> 
+> 		++Lattempts;
+> 
+> 		if (L_prefilter_conditional)
+> 		{
+> 			++Lattempts_CurrentStage; // this is the number of valid L moves.
+> 			//			TR << "----------------------" << std::endl;
+> 			//			TR<<"window_start: " << pose.window_start << ", Condition number " << condition << std::endl;
+> 
+> 			//loops_involved, loops_spanned, loopstarts_found, loopends_found
+> 			//			std::cout << "loops_involved: "; if (!loops_involved.empty() )print_vector(loops_involved); else std::cout << std::endl;
+> 			//			std::cout << "loops_spanned: "; if (!loops_spanned.empty() )print_vector(loops_spanned); else std::cout << std::endl;
+> 			//			std::cout << "loopstarts_found: "; if (!loopstarts_found.empty() )print_vector(loopstarts_found); else std::cout << std::endl;
+> 			//			std::cout << "loopends_found: "; if (!loopends_found.empty() )print_vector(loopends_found); else std::cout << std::endl;
+> 			//			std::cout << std::endl;
+> 		}
+> 		else{
+> 			//else reject it by resetting pose and dont increment TrialCounter counter_
+> 			//			mc_accepted_ = MCA_rejected; // rejected
+> 			//autotemp_reject(pose);
+> 			//			evaluate_convergence_checks( pose, true /*reject*/, false /* not final*/ );
+> //						TR << "SMK : Invalid L move rejected." << std::endl;
+> 			pose = (*last_accepted_pose_);
+> 			score = last_accepted_score_;
+> 
+> 			Lrejects_InvalidMove++;
+> 			Lcounters[movesize-1][reject_invalid_move]++;
+> 
+> 			this->setPoseIsLeader( pose, true ); //next move is another attempted L move
+> 			return false; //SMK REJECTED!
+353,357c695,734
+< 			TR << "Difference: ";
+< 			core::scoring::EnergyMap emap = pose.energies().total_energies();
+< 			emap -= copy_pose.energies().total_energies();
+< 			emap.show_if_nonzero_weight( TR, score_function_->weights() );
+< 			TR << std::endl;
+---
+> 		}
+> 	}
+> 	//BILEVEL FOLLOWER
+> 	else //IsLeader = false
+> 	{
+> 		// SMK 21/08/2014 we can also use the condition numbers here!
+> 		++Fattempts;
+> 		++Fattempts_CurrentStage;
+> 
+> 		if (bSS_dependent_LF){
+> 			// if the move contains a bit of loop, reset only the loop residues
+> 			// this shouldn't affect a "pre-accepted" L move since that will be present in last_accepted_pose_.
+> 			if ( (n_loopres_in_insert > 0) && (n_loopres_in_insert < changed_res.size()) )
+> 			{
+> 				for (unsigned v = 0; v< changed_res.size() ; v++)
+> 				{
+> 					if (loop_res_in_insert.at(v))
+> 					{
+> 						set_torsions_to_last_accepted( pose, changed_res.at(v) );
+> 					}
+> 				}
+> //							TR << "F move is partial." << std::endl;
+> 			}
+> 			else if (n_loopres_in_insert == 0) // this is fine at the F level
+> 			{
+> //							TR << "F move is complete." << std::endl;
+> 			}
+> 			else
+> 			{
+> 				//reject
+> 				pose = (*last_accepted_pose_);
+> 				score = last_accepted_score_;
+> 				Frejects_InvalidMove++;
+> //							TR << "SMK : invalid F move rejected." << std::endl;
+> 				return false;
+> 			}
+> 		} // if (bSS_dependent_LF)
+> 		else{
+> 		// if bSS_dependent_LF==false, we just accept whatever is inserted, so there is nothing to do here.
+> //			TR << "SS check absent; whole F move pre-accepted." << std::endl;
+361c738,762
+< 	counter_.count_trial( move_type );
+---
+> 	//move has now been vetted and pre-approved by one of the levels.
+> 
+> 	// score the pose:
+> 	//Real const score( (*score_function_)( pose ) );
+> 	score = ( (*score_function_)( pose ) ); //SMK
+> 
+> 	Func_evals++;
+> 	//based on number of func evals made so far in the current stage,
+> 	update_SA_temp( this->Func_evals );
+> 
+> 	if (Func_evals >= this->CurrentStageLength){
+> 		// if the budget of function evals is exceeded, exit the current stage and any loops.
+> 		// this should be the only criterion by which any bilevel-enabled stage terminates.
+> 		// this is why the cycle counts were set very high in ClassicAbinitio.
+> 		MGFUtils::MGFGlobal::terminate_bilevel_by_trial_count = true;
+> 		TR << "stage " << check_stage() << ", func_eval count reached maximum. func_evals = " << Func_evals << std::endl;
+> 
+> 		// this handles the edge case of the end of F being the very last move
+> 		if (last_accept_ < (int) heat_after_cycles_) {
+> 			this->add_to_all_archives(pose);
+> 		}
+> 
+> 	}
+> 
+> 	total_score_of_last_considered_pose_ = score; // save this for the TrialMover so that it may keep statistics.
+362a764,765
+> 	//SMK the trial counts only if approved by bilevel pre-filters
+> 	counter_.count_trial( move_type );
+369,372c772,815
+< 	Real const boltz_factor = ( last_accepted_score() - score ) / temperature_ + inner_score_temperature_delta;
+< 	Real const probability = std::exp( std::min (40.0, std::max(-40.0,boltz_factor)) ) * proposal_density_ratio;
+< 	if ( probability < 1 ) {
+< 		if ( mc_RG.uniform() >= probability ) {
+---
+> 	/************************
+> 	 * BILEVEL POSTFILTERS
+> 	 ************************
+> 	 SMK the postfilters are the same whether or not SS-dependent L and F moves are used.
+> 	 */
+> 
+> 	if (pose.Pose_IsLeader){
+> 		// IF we're in the upper level, just accept the move for now.
+> 		//"full" acceptance depends on the result of the follower optimiser
+> 
+> 		//DEBUG
+> //				TR << "SMK:BiLevel:****LEADER****: pre-accepted move." << std::endl;
+> //				TR << "SMK:Master iteration number " << TrialNumber << " at position "<< this->changed_res.at(0) << std::endl;
+> //				TR << "SMK:SS: ";
+> //				for (unsigned i = 0; i < changed_res.size(); i++)
+> //				{
+> //					TR << secstruct_smk[changed_res.at(i)];
+> //				}
+> //				TR << "\tL" << std::endl;
+> //				TR << "--------------------------------------" << std::endl;
+> //		TR << "L move performed, score = " << score << std::endl;
+> 	}
+> 	else
+> 	{
+> 		//just hillclimb. Or in this case, bobsled.
+> 		if (score < last_accepted_score() )//(boltzmannF(last_accepted_score()-score, 2.0))
+> 		{
+> //			TR << "F move accepted, score = " << score << std::endl;
+> 			mc_accepted_ = MCA_accepted_score_beat_last;
+> 			++Faccepts_lowerE; ++FcurrentHillclimbAccepts;
+> //						TR << "SMK:BiLevel:****FOLLOWER****: accepted move." << std::endl;
+> //						TR << "SMK:Master iteration number " << TrialNumber << " at position "<< this->changed_res.at(0) << std::endl;
+> //
+> //						TR << "SMK:SS: ";
+> //						for (unsigned p = 0; p < changed_res.size(); p++)
+> //						{
+> //							TR << secstruct_smk[changed_res.at(p)];
+> //						}
+> //						TR << "\tF" << std::endl;
+> //						TR << "--------------------------------------" << std::endl;
+> 		}
+> 		else
+> 		{
+> 			++Frejects_Energy;
+374,375c817,819
+< 			autotemp_reject();
+< 			evaluate_convergence_checks( pose, true /*reject*/, false /* not final*/ );
+---
+> 
+> //			TR << "F move rejected with score = " << score << std::endl;
+> 			//			evaluate_convergence_checks( pose, true /*reject*/, false /* not final*/ );
+376a821,825
+> 			score = last_accepted_score_;
+> 
+> 			autotemp_reject(pose);
+> 
+> //			TR << "last_accept_ = " << last_accept_ << std::endl;
+378d826
+< 			//TR << "Rejected with score = " << score
+382a831,832
+> 		}
+> 	}
+383a834,835
+> 	if(bGenerateTraj){
+> 		OutputNonTrajStuff_stage( pose, stage_ );
+384a837,843
+> 		if (!TrajInLMins()){
+> 			//SMK increase NumAccepts and output stuff for trajectory generation.
+> 			NumAccepts++;    ///SMK
+> 			if (NumAccepts%TrajInterval==0)///SMK
+> 			{
+> 				output_trajectory_point_stage( pose, stage_ );
+> 			}
+386,391c845
+< 		mc_accepted_ = MCA_accepted_thermally; // accepted thermally
+< 
+< 		//TR  << "thermally accepted with score = " << score
+< 		//	<< " ( prob = " << probability << " ) last_accepted scrore: " << last_accepted_score() << std::endl;
+< 		// score_function_->show( T("protocols.moves.MonteCarlo.boltzmann"), pose );
+< 	} else {
+---
+> 	}
+393c847,851
+< 		mc_accepted_ = MCA_accepted_score_beat_last; // energy is lower than last_accepted
+---
+> 	// to switch to Follower
+> 	// and avoid printing out incorrect value of IsLeader in score trajectories.
+> 	if (pose.Pose_IsLeader && (this->check_stage() > 1 && this->check_stage() < 4)) {
+> 		this->setPoseIsLeader( pose, false );
+> 		//		TR << "SMK: Pose_IsLeader set to False." << std::endl;
+395a854,855
+> 	///SMK END
+> 
+410c870
+< // 	last_accepted_pose_ = new Pose( *pose );
+---
+> 	//last_accepted_pose_ = new Pose( *pose );
+412c872,873
+< 	autotemp_accept();
+---
+> 	//	autotemp_accept();
+> 	last_accept_ = 0; //SMK
+417c878
+< 		evaluate_convergence_checks( pose, false /*not reject*/, false /*not final*/ );
+---
+> 		//		evaluate_convergence_checks( pose, false /*not reject*/, false /*not final*/ );
+418a880
+> //		TR << "lowest_score_pose set by main boltzmann(), energy = " << lowest_score_ << std::endl; //SMK
+420,421c882,883
+< 	if( update_boinc_ )
+< 		boinc::Boinc::update_graphics_low_energy( pose, lowest_score() );
+---
+> 		if( update_boinc_ )
+> 			boinc::Boinc::update_graphics_low_energy( pose, lowest_score() );
+434,436c896,898
+< 	core::Real score_delta,
+< 	std::string const & move_type, // = "unk"
+< 	core::Real const proposal_density_ratio // = 1
+---
+> 		core::Real score_delta,
+> 		std::string const & move_type, // = "unk"
+> 		core::Real const proposal_density_ratio // = 1
+440c902,903
+< 	Real const score( last_accepted_score_ + score_delta );
+---
+> 	//Real const score( last_accepted_score_ + score_delta );
+> 	score = ( last_accepted_score_ + score_delta );//SMK
+482a946,1005
+> //SMK NEW NEW NEW
+> // stripped down version. This is used to decide whether to accept an L move.
+> bool
+> MonteCarlo::boltzmann(
+> 		core::Real score_delta,
+> 		core::Real const _temperature
+> )
+> {
+> 	Real const proposal_density_ratio = 1.0;
+> 
+> 	Real const boltz_factor = score_delta / _temperature;
+> 
+> 	Real const probability = std::exp( std::min (40.0, std::max(-40.0,boltz_factor)) ) * proposal_density_ratio;
+> 
+> 	if ( probability < 1){
+> 		if(mc_RG.uniform() >= probability ) {
+> 			//			return MCA_rejected; // rejected
+> 			++Lrejects_Energy;
+> 			++Lcounters[movesize-1][reject_E];
+> 			return false;
+> 		}
+> 		//		return MCA_accepted_thermally; // accepted thermally
+> 		++Laccepts_MC;
+> 		++Lcounters[movesize-1][accept_mc];
+> 		return true;
+> 	}
+> 	//	else return MCA_accepted_score_beat_last; // energy is lower than last_accepted
+> 	++Laccepts_lowerE;
+> 	++Lcounters[movesize-1][accept_lowE];
+> 	return true;
+> }
+> 
+> // SMK stripped down version. This can be used to decide whether to accept an F move.
+> bool
+> MonteCarlo::boltzmannF(
+> 		core::Real score_delta,
+> 		core::Real const _temperature
+> )
+> {
+> 	Real const proposal_density_ratio = 1.0;
+> 
+> 	Real const boltz_factor = score_delta / _temperature;
+> 
+> 	Real const probability = std::exp( std::min (40.0, std::max(-40.0,boltz_factor)) ) * proposal_density_ratio;
+> 
+> 	if ( probability < 1){
+> 		if(mc_RG.uniform() >= probability ) {
+> 			mc_accepted_ = MCA_rejected; // rejected
+> 			++Frejects_Energy;
+> 			return false;
+> 		}
+> 		mc_accepted_ =  MCA_accepted_thermally; // accepted thermally
+> 		++Faccepts_MC; ++FcurrentHillclimbAccepts;
+> 		return true;
+> 	}
+> 	//	else return MCA_accepted_score_beat_last; // energy is lower than last_accepted
+> 	++Faccepts_lowerE; ++FcurrentHillclimbAccepts;
+> 	mc_accepted_ = MCA_accepted_score_beat_last; // energy is = or lower than last_accepted
+> 	return true;
+> }
+491c1014,1015
+< 	Real const score( (*score_function_)( *last_accepted_pose_ ) );
+---
+> 	//Real const score( (*score_function_)( *last_accepted_pose_ ) );
+> 	score = ( (*score_function_)( *last_accepted_pose_ ) ); //SMK
+495a1020
+> 
+499a1025,1026
+> 
+> //	TR << "lowest_score_pose set by reset(), energy = " << lowest_score_ << std::endl; //SMK
+510c1037,1038
+< 	Real const score( (*score_function_)( *last_accepted_pose_ ) );
+---
+> 	//Real const score( (*score_function_)( *last_accepted_pose_ ) );
+> 	score = ( (*score_function_)( *last_accepted_pose_ ) ); //SMK
+517a1046,1047
+> //		TR << "lowest_score_pose set by reset_last_accepted(), energy = " << lowest_score_pose_->energies().total_energy() << std::endl; //SMK
+> //		TR << "lowest_score_ not set!" << std::endl;
+522,523d1051
+< 
+< 
+527,528c1055,1056
+< 	bool const setting,
+< 	Real const quench_temp
+---
+> 		bool const setting,
+> 		Real const quench_temp
+550a1079
+> //	TR << "lowest_score_pose set by setter function, energy = " << lowest_score_ << std::endl; //SMK
+558a1088,1094
+> //SMK
+> core::scoring::ScoreFunction const &
+> MonteCarlo::stg4_score_function() const
+> {
+> 	return *stg4_score_function_;
+> }
+> 
+563c1099,1100
+< 	//	TR << "Last: " << last_accepted_pose_->energies().total_energy() << " != " << last_accepted_score_ << " diff " << last_accepted_pose_->energies().total_energy() - last_accepted_score_ << std::endl;
+---
+> 	//	TR << "Last: " << last_accepted_pose_->energies().total_energy() << " != " <<
+> 	//	last_accepted_score_ << " diff " << last_accepted_pose_->energies().total_energy() - last_accepted_score_ << std::endl;
+574c1111,1112
+< 	//	TR << "Low: " << lowest_score_pose_->energies().total_energy() << " != " << lowest_score_ << " diff " << lowest_score_pose_->energies().total_energy() - lowest_score_ << std::endl;
+---
+> 	//	TR << "Low: " << lowest_score_pose_->energies().total_energy() << " != " <<
+> 	//	lowest_score_ << " diff " << lowest_score_pose_->energies().total_energy() - lowest_score_ << std::endl;
+586a1125,1268
+> /////////////////////////////////////////////////////////////////////////////
+> // replicate logic from monte_carlo.cc
+> // SMK MODDED VERSION: reads in pose
+> // should probably make these parameters ( 150, 1.0 )
+> void
+> MonteCarlo::autotemp_reject(Pose & pose)
+> {
+> 	using basic::options::option;
+> 	using namespace basic::options::OptionKeys;
+> 
+> 
+> 	//	int const heat_after_cycles( 150 );
+> 	//	Real const heat_delta( quench_temp_ * 0.5 );
+> 	//	Real const max_temperature( quench_temp_ * 10.0 );
+> 	bool LMin_accept;
+> 
+> //	TR << "in autotemp_reject, stored score = " << score << ", pose score = " << (*score_function_)(pose) << std::endl;
+> 
+> 	// we use scoredelta to make decisions on acceptance.
+> 	// stg4_score_function_ is used only for reporting.
+> 	Real const scoredelta = LMin_score-score;
+> 
+> 	if ( !autotemp_ ) return;
+> 	if (last_accept_ >= (int) heat_after_cycles_) {
+> 
+> 		// SMK we've reached a local minimum (LMin).
+> 
+> //		this->pushFcurrentHillclimbAccepts();
+> 
+> 		std::ofstream rmsds;
+> 
+> 		if (native_present) { // If a native file is supplied, output some diagnostics. Disable this if the output is too much.
+> 
+> 			Pose copy_pose = pose; //make a copy since calling scorefxn modifies the Energies object in Pose
+> 
+> 			rmsds.open("LMin_RMSDs.txt", std::ios::app);
+> 
+> 			rmsds 	<< get_rmsd_to_native( pose ) << ' '
+> 					<< (*stg4_score_function_)(copy_pose) << ' '
+> 					<< score << ' ' // SMK print pose's current score only; no more native scoring everytime we reach this point!
+> 					<< stage_ << ' ';
+> 		}
+> 
+> 		if(bGenerateTraj && TrajInLMins()){
+> 			// SMK output every 100th *generated* Lmin.
+> 			NumAccepts++;
+> 
+> 			if (NumAccepts%TrajInterval==0)
+> 			{
+> 				output_trajectory_point_stage( pose, stage_ );
+> 			}
+> 		}
+> 
+> 		// check if the Lmin should be added to the archives before evaluating
+> 		add_to_all_archives(pose);
+> 
+> //		mc_archive.add_to_archive(pose);
+> 
+> 		//compare current score to that of the last LMin
+> //		TR << "autotemp_reject : comparing pose (" << score << ") and last LMin(" << LMin_score << ")" << std::endl;
+> 		if ( boltzmann(scoredelta, temperature_) ) {//26062014 NotUsingLMinTemp
+> 
+> 			//if boltzmann likes it, set this to the new last minimum
+> 			LMin_accept = true;
+> 			*LMin = pose;
+> 			LMin_score = score; //(*score_function_)(*LMin);
+> 			LMin_temperature = temperature_;
+> 
+> //			TR << "L move accepted; score delta = " << -scoredelta << ", movesize was " << movesize << std::endl;
+> //			TR << "LMin score = " << score
+> //								<< ", last_accepted_score = " << last_accepted_score_
+> //								<< ", lowest score = " << lowest_score_
+> //								<< std::endl;
+> 
+> 			set_last_accepted_pose(pose);//sets pose and score
+> 
+> 			L_reject_vec.push_back (Real(n_L_reject));//cast to Real to use mean/stdev
+> 
+> //			if(bGenerateTraj){
+> //				std::ofstream Lrejectfile ("Lreject_counts.txt", std::ios::app);
+> //
+> //				Lrejectfile << n_L_reject << "\t" << this->check_stage() << "\t" << this->temperature() << std::endl;
+> //
+> //				Lrejectfile.close();
+> //			}
+> 			n_L_reject = 0;
+> 
+> //			this->show_all_energies(pose, std::cout);
+> 			//autotemp_accept();//only reset temp if L move was fully accepted.
+> 			//SMK instead of this, just update SA temp after this if-else block
+> 
+> 			//find and record which loop was moved
+> 			try{
+> 				Size const s = this->check_stage()-1;
+> 				//				TR << "Incrementing LoopSamplingFreqs " << CurrentLoopID << " " << s << std::endl;
+> 				LoopSamplingFreqs[CurrentLoopID][s]++;
+> 			}
+> 			catch (std::exception& e) {
+> 				utility_exit_with_message( "Caught exception: " + std::string(e.what()) );
+> 			}
+> 
+> //			if(bGenerateTraj){
+> //				// SMK output every 100th *accepted* Lmin.
+> //				NumAccepts++;
+> //
+> //				if (NumAccepts%TrajInterval==0)
+> //				{
+> //					output_trajectory_point_stage( pose, stage_ );
+> //				}
+> //			}
+> 
+> 		}
+> 		else {
+> 
+> 			//boltzmann doesn't like it; reset pose to LMin
+> 			LMin_accept = false;
+> //			TR << "L move rejected; score delta = " << -scoredelta <<std::endl;
+> 
+> 			pose = *LMin;
+> 			score = LMin_score;
+> 			set_last_accepted_pose(*LMin);//sets pose and score
+> 
+> //			TR << "Rewind to LMin. score = " << score
+> //					<< ", last_accepted_score = " << last_accepted_score_
+> //					<< ", lowest score = " << lowest_score_
+> //					<< std::endl;
+> 
+> 			++n_L_reject;
+> 		}
+> 
+> //		update_SA_temp( this->Func_evals );
+> 		if(native_present) {
+> 
+> 			rmsds << LMin_accept;
+> 			rmsds << std::endl;
+> 			rmsds.close();
+> 		}
+> 
+> 		this->setPoseIsLeader( pose, true );
+> 		//		TR << "SMK: Pose_IsLeader set to true. Next move should be L..." << std::endl;
+> 		last_accept_ = -1;
+> 	}
+> 	++last_accept_;
+> }
+595c1277
+< 	//	int const heat_after_cycles( 150 );
+---
+> 	int const heat_after_cycles( 50 );
+600c1282
+< 	if ( last_accept_ >= (int) heat_after_cycles_ ) {
+---
+> 	if ( last_accept_ >= (int) heat_after_cycles ) {
+620a1303
+> 
+647a1331,2358
+> 
+> //SMK BEGIN
+> void
+> MonteCarlo::initialise_SMK_counters()
+> {
+> 	Laccepts_lowerE = 0;
+> 	Laccepts_MC = 0;
+> 	Lrejects_Energy = 0;
+> 	Lrejects_InvalidMove = 0;
+> 
+> 	Faccepts_lowerE = 0;
+> 	Faccepts_MC = 0;
+> 	Frejects_Energy = 0;
+> 	Frejects_InvalidMove = 0;
+> 
+> 	Lattempts = 0;
+> 	Fattempts = 0;
+> 
+> 	n_L_reject = 0;
+> 	FcurrentHillclimbAccepts = 0;
+> 
+> 	//some file headers
+> 	if (bGenerateTraj && native_present) {
+> 		std::ofstream rmsds ("LMin_RMSDs.txt", std::ios::out);
+> 		rmsds << "rmsd stg4score score nativescore stage accepted" <<std::endl;
+> 		rmsds.close();
+> 	}
+> }
+> 
+> //this will use the current value of stage_ !
+> void
+> MonteCarlo::print_Lcounters(std::ostream& Lcounter_file){
+> 	//there will be n * 4 values where n is the max movesize(9)
+> 	Lcounter_file << "movesize accepts_lowerE accepts_MC rejects_E rejects_invalid_move" << std::endl;
+> 
+> 	for (unsigned i=0; i<Lcounters.size(); i++) {
+> 		Lcounter_file << i+1;
+> 		for (unsigned j=0; j<Lcounters[i].size(); j++) {
+> 			Lcounter_file << "\t\t" << Lcounters[i][j];
+> 		}
+> 		Lcounter_file << std::endl;
+> 	}
+> }
+> 
+> void
+> MonteCarlo::reset_Lcounters(){
+> 	Lcounters.resize(9);
+> 	for (unsigned i=0; i<9; i++) {
+> 		Lcounters[i].assign(4,0); //this completely replaces Lcounters[i], so no need to resize
+> 	}
+> }
+> 
+> void
+> MonteCarlo::write_Lattempts_CurrentStage(){
+> 
+> 	//write to stats.txt
+> 
+> 	std::ofstream stats ("stats.txt", std::ios::app);
+> 
+> 	stats << "Stage " << check_stage() << ", valid L moves: " << Lattempts_CurrentStage << std::endl;
+> 	stats.close();
+> 
+> 	// Lattempts_CurrentStage is zeroed using set_AttemptsInCurrentStage(Size, Size).
+> }
+> 
+> //SMK call once at end of run only!
+> void
+> MonteCarlo::show_stats_SMK()
+> {
+> 	Real mean,stdev;
+> 
+> 	mean = numeric::mean(L_reject_vec);
+> 	stdev = numeric::statistics::std_dev_with_provided_mean(L_reject_vec.begin(), L_reject_vec.end(), mean);
+> 
+> 	std::ofstream stats ("stats.txt", std::ios::app); // other functions write to this file before this one
+> 
+> 	stats 	<< "L accepts/rejects (valid moves):" << Laccepts_lowerE + Laccepts_MC << " / " << Lrejects_Energy << std::endl
+> 			<< "Invalid L moves:				" << Lrejects_InvalidMove << std::endl
+> 			<< "L scored lower:         		" << Laccepts_lowerE << std::endl
+> 			<< "L thermal accepts:      		" << Laccepts_MC << std::endl
+> 			<< "L total attempts (actual/calc):	" << Lattempts << "/" << Laccepts_lowerE + Laccepts_MC + Lrejects_Energy + Lrejects_InvalidMove << std::endl
+> 			<< "L rejects before autotemp (mean/stdev): " << mean << " / " << stdev << std::endl
+> 			<< "----------------------------------------"  << std::endl
+> 			<< "F accepts/rejects (valid moves):" << Faccepts_lowerE + Faccepts_MC << " / " << Frejects_Energy << std::endl
+> 			<< "Invalid F moves:				" << Frejects_InvalidMove << std::endl
+> 			<< "F scored lower:         		" << Faccepts_lowerE << std::endl
+> 			<< "F thermal accepts:      		" << Faccepts_MC << std::endl
+> 			<< "F total attempts (actual/calc):	" << Fattempts << "/" << Faccepts_lowerE + Faccepts_MC + Frejects_Energy + Frejects_InvalidMove << std::endl
+> 			<< "----------------------------------------"  << std::endl
+> 			<< "TrialNumber (SMK):      " << TrialNumber << std::endl
+> 			;
+> 
+> 	stats.close();
+> 
+> 	//DEBUG
+> 	//L_reject_vec is utility::vector1 !
+> 	//	if (!L_reject_vec.empty()) {
+> 	//		std::ofstream Lrejectfile ("Lreject_counts.txt", std::ios::app);
+> 	//		for (Size i = 1; i <= L_reject_vec.size(); i++)
+> 	//		{
+> 	//			Lrejectfile << L_reject_vec.at(i) << std::endl;
+> 	//		}
+> 	//
+> 	//		Lrejectfile.close();
+> 	//	}
+> }
+> 
+> void
+> MonteCarlo::output_trajectory_point(Pose& pose)
+> {
+> 	NumOfPDBs++;    ///SMK
+> 
+> 	///SMK output torsions and PDBs with filenames generated according to NumOfPDBs
+> 	///SMK sprintf NumOfPDBs to a string for the filename, and call the necessary functions
+> 
+> 	std::stringstream tempstring;
+> 	std::string MypdbFilename;
+> 
+> 	tempstring<< NumOfPDBs << ".PDB";
+> 	MypdbFilename = tempstring.str();
+> 	pose.dump_pdb(MypdbFilename);
+> 
+> 	///SMK output torsions for each state to a file. Each line contains phi and psi for each position in a particular conformation
+> 	///SMK also output score value to another file
+> 	// save only the _all versions; every move is recorded
+> 
+> 	//    std::ofstream Mytraj;
+> 	//
+> 	//    Mytraj.open("torsions.traj", std::ios::app);
+> 	//
+> 	//    //each line of torsions.traj contains phi, psi and omega for all residues
+> 	//
+> 	//    Mytraj << this->check_stage() << "  ";//output stage first, if required
+> 	//
+> 	//    for(Size pp=1;pp<=pose.n_residue();pp++)
+> 	//    {
+> 	//        Mytraj  << pose.phi(pp)  << "  "
+> 	//        		<< pose.psi(pp)  << "  "
+> 	//        		<< pose.omega(pp);
+> 	//    }
+> 	//    Mytraj << std::endl;
+> 	//    Mytraj.close();
+> 	//
+> 	//    //now score info
+> 	//    std::ofstream Myscoretraj;
+> 	//    Myscoretraj.open("score.traj", std::ios::app);
+> 	//    Myscoretraj << score << "\t" << this->check_stage() << "\t" << pose.Pose_IsLeader << std::endl;
+> 	//    Myscoretraj.close();
+> 
+> }
+> 
+> void
+> MonteCarlo::output_trajectory_point_stage(Pose& pose, Size stage, std::string tag)
+> {
+> 	if (stage < 4) //In stages 1 to 3 there is only one trajectory.
+> 		this->output_trajectory_point(pose);
+> 	else if (stage == 4) {
+> 		//stage4 is run on each structure in each archive, so need this info
+> 		NumOfPDBs++;    ///SMK
+> 
+> 		///SMK output torsions and PDBs with filenames generated according to NumOfPDBs
+> 		///SMK sprintf NumOfPDBs to a string for the filename, and call the necessary functions
+> 
+> 		std::stringstream tempstring;
+> 		std::string MypdbFilename;
+> 
+> 		tempstring << "Archive_struct" << tag << "_stg4_traj_" << NumOfPDBs << ".PDB";
+> 		MypdbFilename = tempstring.str();
+> 		pose.dump_pdb(MypdbFilename);
+> 
+> 	} else {
+> 		std::stringstream msg;
+> 		msg << "Invalid stage ID passed to output traj info!\nstage = " << stage << std::endl;
+> 		utility_exit_with_message(msg.str().c_str());
+> 	}
+> 
+> }
+> 
+> void
+> MonteCarlo::OutputNonTrajStuff(Pose& pose)
+> {
+> 	//SMK check all positions for changes in torsion. update the samplingfrequencies array accordingly
+> 	for (Size iz=1; iz<=pose.n_residue(); iz++)
+> 	{
+> 		if	( 	(pose.phi(iz)	!= (*last_accepted_pose_).phi(iz)) ||
+> 				(pose.psi(iz)	!= (*last_accepted_pose_).psi(iz)) ||
+> 				(pose.omega(iz)	!= (*last_accepted_pose_).omega(iz))
+> 			) {
+> 			// iz is the residue number (starts from 1). the indices for the stage also start from 1, so subtract 1 from each.
+> 			++samplingfrequencies[iz-1][stage_-1];
+> 		}
+> 	}
+> 
+> 	if (this->MakeProportionData()){
+> 		///SMK output torsions for each state to a file. Each line contains phi and psi for each position in a particular conformation
+> 		/// This file can get very large very easily
+> 
+> 		std::ofstream Mytraj_all;
+> 
+> 		Mytraj_all.open("torsions_all.traj", std::ios::app);
+> 
+> 		//each line of torsions.traj contains phi, psi and omega for all residues
+> 
+> 		Mytraj_all << this->check_stage() << "  ";//output stage first, if required
+> 
+> 		for(Size pp=1;pp<=pose.n_residue();pp++)
+> 		{
+> 			Mytraj_all  << pose.phi(pp)  << "  "
+> 					<< pose.psi(pp)  << "  "
+> 					<< pose.omega(pp)<< "  ";
+> 		}
+> 		Mytraj_all << std::endl;
+> 		Mytraj_all.close();
+> 
+> 		///SMK also output total score value and stage to another file
+> 		std::ofstream Myscoretraj_all;
+> 		Myscoretraj_all.open("score_all.traj", std::ios::app);
+> 		Myscoretraj_all << score << "\t" << this->check_stage() << "\t" << pose.Pose_IsLeader << std::endl;
+> 		Myscoretraj_all.close();
+> 	}
+> }
+> 
+> void
+> MonteCarlo::OutputNonTrajStuff_stage(Pose& pose, Size stage, std::string tag)
+> {
+> 	if (stage < 4)
+> 		this->OutputNonTrajStuff(pose);
+> 	else if (stage == 4) {
+> 		//use this->archive_structnum
+> 		//SMK check all positions for changes in torsion. update the samplingfrequencies array accordingly
+> 		for (Size iz=1; iz<=pose.n_residue(); iz++)
+> 		{
+> 			if ((pose.phi(iz) != (*last_accepted_pose_).phi(iz)) ||
+> 				(pose.psi(iz) != (*last_accepted_pose_).psi(iz)) ||
+> 				(pose.omega(iz) != (*last_accepted_pose_).omega(iz)) )
+> 			{
+> 				++stage4_samplingfreqs[iz];
+> 			}
+> 		}
+> 
+> 		if (this->MakeProportionData()){
+> 			std::ofstream Mytraj_all;
+> 			std::stringstream filename;
+> 			filename << "Archive_struct"<< tag << "_stage4_torsions_all.traj";
+> 			Mytraj_all.open(filename.str().c_str(), std::ios::app);
+> 			for(Size pp=1;pp<=pose.n_residue();pp++)
+> 			{
+> 				Mytraj_all  << pose.phi(pp)  << "  "
+> 						<< pose.psi(pp)  << "  "
+> 						<< pose.omega(pp)<< "  ";
+> 			}
+> 			Mytraj_all << std::endl;
+> 			Mytraj_all.close();
+> 
+> 			///SMK also output total score value and stage to another file
+> 			std::ofstream Myscoretraj_all;
+> 			std::stringstream scorefname;
+> 			scorefname << "Archive_struct" << tag <<"_stage4_score_all.traj";
+> 
+> 			Myscoretraj_all.open(scorefname.str().c_str(), std::ios::app);
+> 			Myscoretraj_all << score << "\t" << this->check_stage() << "\t" << pose.Pose_IsLeader << std::endl;
+> 			Myscoretraj_all.close();
+> 		}
+> 
+> 	} else {
+> 		std::stringstream msg;
+> 		msg << "Invalid stage ID passed to output traj info!\nstage = " << stage << std::endl;
+> 		utility_exit_with_message(msg.str().c_str());
+> 	}
+> }
+> 
+> void
+> MonteCarlo::print_stg4_samplingfreqs (std::string tag){
+> 	std::stringstream filename;
+> 
+> 	filename << "Archive_struct"<< tag << "_stage4_sampling_frequencies.txt";
+> 	std::ofstream freqfile (filename.str().c_str());
+> 
+> 	freqfile << "stage4" << std::endl;
+> 
+> 	for (utility::vector1 < Size >::iterator it = stage4_samplingfreqs.begin(); it != stage4_samplingfreqs.end(); ++it){
+> 		freqfile << (*it) << std::endl;
+> 	}
+> 
+> 	freqfile.close();
+> }
+> 
+> void
+> MonteCarlo::get_loops_from_psipred ( Pose const & pose )
+> {
+> 	///generate SS assignments using PSIPRED file ( extension .psipred_ss2)
+> 	///this is pulled from the options system.
+> 
+> 	//call pose::read_psipred_ss2_file.
+> 	//this looks for the in::file::psipred_ss2 option and operates on it.
+> 	//'C' in the psipred file becomes 'L'.
+> 
+> 	secstruct_smk = core::pose::read_psipred_ss2_file( pose );
+> 
+> 	TR << "SMK: read in sec str from psipred file for "<< secstruct_smk.size() << " residues:"<< std::endl;
+> 
+> 	for (Size i = 1; i <= secstruct_smk.size(); i++) {
+> 		TR << secstruct_smk[i];
+> 
+> 		//count the number of loops
+> 		//this should automatically skip a loop region starting at the C-ter, but not the N-ter.
+> 		// the latter is handled later
+> 		if ( i > 1 && secstruct_smk[i] == 'L') {
+> 			if ( secstruct_smk[i] != secstruct_smk[i-1] ) {
+> 				//this is a loop start position
+> 				++n_loops;
+> 			}
+> 		}
+> 	}
+> 	TR <<std::endl;
+> 
+> 	//create an index of loop residue start and end positions.
+> 	LoopInfo = new Size* [n_loops];
+> 
+> 	for (Size i=0; i < n_loops; i++) {
+> 		LoopInfo[i] = new Size [2]; //need only start and end residue numbers.
+> 	}
+> 
+> 	Size loopId = 0;
+> 	//skip = 2 to handle cases where *only* the first residue is an L. This does happen frequently
+> 	Size skip=2;
+> 
+> 	//skip the first tail, if present
+> 	while (secstruct_smk[skip-1] == 'L') {
+> 		++skip;
+> 	}
+> 
+> 	//get the start and end positions
+> 	for (Size i = skip; i <= secstruct_smk.size(); i++) {
+> 
+> 		if ( secstruct_smk[i] == 'L' && secstruct_smk[i-1] != 'L' ) {
+> 			//this is a loop start position
+> 			LoopInfo[loopId][0] = i;
+> 		}
+> 		else if ( secstruct_smk[i] != 'L' && secstruct_smk[i-1] == 'L' ) {
+> 			//i-1 gives the loop end position
+> 			LoopInfo[loopId][1] = (i-1);
+> 			++loopId;
+> 		}
+> 	}
+> 
+> 	//exclude the terminal floppy bit, if it exists.
+> 	if( secstruct_smk[secstruct_smk.size()] == 'L' ) {
+> 		//std::cout<<"C-ter tail detected. Removing from list."<<std::endl;
+> 		delete[] LoopInfo[n_loops-1];
+> 		--n_loops;
+> 	}
+> 
+> 	//calculate and store loop lengths. Need this info to prefilter L moves
+> 	for (Size i=0; i<n_loops;i++) {
+> 		LoopLengths.push_back( LoopInfo[i][1] - LoopInfo[i][0] + 1 );
+> 	}
+> 
+> 	//DEBUG: make sure this works correctly
+> 	TR << "SMK: There are " << n_loops << " inter-SS element loops:" << std::endl;
+> 	TR << "LoopID\tStart\tEnd\tLength" << std::endl;
+> 	for (Size i = 0; i < n_loops; i++) {
+> 		TR << i << "\t\t" << LoopInfo[i][0] << "\t\t" << LoopInfo[i][1] << "\t" << LoopLengths.at(i) << std::endl;
+> 	}
+> 
+> 	//now allocate and init to zero a sampling freq matrix for the loops
+> 	LoopSamplingFreqs = new Size* [n_loops];
+> 
+> 	for (Size i=0; i < n_loops; i++) {
+> 		LoopSamplingFreqs[i] = new Size [4]; //store the sampling freqs in each stage, for each loop.
+> 		for (Size j=0; j<4; j++){
+> 			LoopSamplingFreqs[i][j] = 0;
+> 		}
+> 	}
+> 
+> }//get_loops_from_psipred
+> 
+> 
+> void
+> MonteCarlo::get_native_pose() {
+> 
+> 	using basic::options::option;
+> 	using namespace basic::options::OptionKeys;
+> 
+> 	if ( option[in::file::native].user()) {
+> 		//check that the file exists
+> 		std::string res;
+> 		utility::io::izstream file( option[in::file::native]().name() );
+> 		if (!file) {
+> 			TR.Error << "PDB File:" << option[in::file::native]().name() << " not found!" << std::endl;
+> 			utility_exit_with_message( "Cannot open PDB file \"" + option[in::file::native]().name() + "\"" );
+> 			native_present=false;
+> 		} else {
+> 			TR << "Read file: " << option[in::file::native]().name() << std::endl;
+> 			native = new Pose();
+> 			core::import_pose::pose_from_pdb( *native, option[in::file::native]() );
+> 			core::util::switch_to_residue_type_set(*native, "CENTROID");
+> 			TR << "NATIVE ACQUIRED" <<std::endl;
+> 			native_present=true;
+> 
+> 			//			//output native torsions to a file; need to do this only once really
+> 			//			std::ofstream nativetorsion ("native.torsions", std::ios::out);
+> 			//			for (Size r=1; r<=native->n_residue(); r++) {
+> 			//				nativetorsion << native->phi(r) << " " << native->psi(r) << " " << native->omega(r) << std::endl;
+> 			//			}
+> 			//			nativetorsion.close();
+> 			//			utility_exit_with_message("Normal exit after outputting native torsions.");
+> 		}
+> 	}
+> 	else {
+> 		TR << "SMK: no native file supplied, some diagnostics cannot be calculated." << std::endl;
+> 		native_present=false;
+> 		//		*native = new Pose();
+> 	}
+> 
+> 	return;
+> }
+> 
+> 
+> //call each time LMin is updated.
+> //use backbone with O atom included, for consistency with how we calc RMSD elsewhere.
+> Real
+> MonteCarlo::get_rmsd_to_native(Pose const & pose) {
+> 	if(native_present)
+> 		return core::scoring::CA_rmsd(pose, *native);
+> //		return core::scoring::bb_rmsd_including_O( pose, *native );
+> 	else
+> 		return -10.0; //so you know something is wrong
+> }
+> 
+> //call in ctors if you want to verify RMSD.
+> //needs a text file with paths to test structures and the corresponding RMSD vals.
+> // these are protein-specific and (currently) use backbone RMSD instead of Calpha.
+> void
+> MonteCarlo::test_rmsd_calc(Pose const & native_pose){
+> 	using basic::options::option;
+> 	using namespace basic::options::OptionKeys;
+> 	//read in some pdb files for the target, and calc their rmsd to native
+> 	//compare to reference values obtained using Simon Lovell's rmsd code
+> 	if (option[in::file::native].user()){
+> 		// path ends with file separator (e.g. '/')
+> 		std::string path = option[in::file::native]().path();
+> 
+> 		path += "reference_rmsds.txt";
+> 		//		TR << "SMK: path is " << path << std::endl;
+> 
+> 		std::ifstream ref_rmsds (path.c_str());
+> 		if (!ref_rmsds.is_open()){
+> 			utility_exit_with_message("Can't find file " + path);
+> 		} else {
+> 			TR << "SMK: RMSD tests:"<<std::endl;
+> 			TR << "SMK: path";
+> 			for (unsigned i=0; i < 8; i++)
+> 				TR << "\t";
+> 			TR << "calc_rmsd\tref_rmsd" << std::endl;
+> 		}
+> 
+> 		std::string full_path_to_struct;
+> 		Real ref_rmsd_val, calc_rmsd_val;
+> 
+> 		while (ref_rmsds.good()){
+> 			Pose test_struct;
+> 			//read in the path to the structure from the file, and its rmsd to native
+> 			ref_rmsds >> full_path_to_struct >> ref_rmsd_val;
+> 
+> 			core::import_pose::centroid_pose_from_pdb(test_struct, full_path_to_struct, false);
+> 			//			core::util::switch_to_residue_type_set(test_struct, "CENTROID");
+> 			calc_rmsd_val = get_rmsd_to_native(test_struct);
+> 
+> 			TR << "SMK: " << full_path_to_struct << '\t' << calc_rmsd_val << "\t\t" << ref_rmsd_val << std::endl;
+> 			test_struct.clear();
+> 		}
+> 		ref_rmsds.close();
+> 	}
+> }
+> 
+> //call each time scorefxn is updated. Maybe store somewhere
+> Real
+> MonteCarlo::get_native_score() {
+> 	if (native_present) return (*score_function_)( *native );
+> 	else return 1000.0; //unlikely yeah?
+> }
+> 
+> void
+> MonteCarlo::show_all_energies(Pose const& pose, std::ostream& os) {
+> 	pose.energies().show_totals(os);
+> }
+> 
+> void
+> MonteCarlo::set_torsions_to_last_accepted( Pose& pose, Size residue ) {
+> 	//if (residue <= pose.n_residue() && residue > 0){ //this check is already performed within the set_X functions.
+> 
+> 	pose.set_phi  ( residue, last_accepted_pose_->phi  (residue) );
+> 	pose.set_psi  ( residue, last_accepted_pose_->psi  (residue) );
+> 	pose.set_omega( residue, last_accepted_pose_->omega(residue) );
+> 
+> 	//SMK also set the pdb info data.
+> 
+> 	pose.pdb_sources.at(residue) = last_accepted_pose_->pdb_sources.at(residue);
+> 	pose.pdb_source_res.at(residue) = last_accepted_pose_->pdb_source_res.at(residue);
+> 
+> }
+> ////////////////Simulated annealing///
+> 
+> // set initial parameters for current SA step
+> // See comments for CurrentStageLength in MonteCarlo.hh
+> void
+> MonteCarlo::initialise_SA( Size MaxAttemptsInCurrentStage)
+> {
+> 	//use highlevel attempt count. In the current framework we can only estimate this.
+> 	switch (this->check_stage()) {
+> 		case 1:
+> 			TR.Warning << "Warning: initialise_SA called in stage 1; this shouldn't happen" << std::endl;
+> 			CurrentStageLength = Real (MaxAttemptsInCurrentStage) * 0.3;//old setting pre 24/06/2014
+> 			break;
+> 		case 2:
+> //			CurrentStageLength = Real (MaxAttemptsInCurrentStage) * 0.015;
+> 			CurrentStageLength = 2000 * this->abinitio_increase_cycles; // This is the number of "valid" function evaluations in stage 2. Corresponds to fn eval budget in Rosetta
+> 			break;
+> 		case 3:
+> //			CurrentStageLength = Real (MaxAttemptsInCurrentStage) * 0.15;
+> 			CurrentStageLength = 20000 * this->abinitio_increase_cycles; // This is the number of "valid" function evaluations in stage 3. Corresponds to fn eval budget in Rosetta
+> 			break;
+> 		case 4:
+> 			TR.Warning << "Warning: initialise_SA called in stage 4; this shouldn't happen" << std::endl;
+> 			CurrentStageLength = Real (MaxAttemptsInCurrentStage) * 0.05;
+> 			break;
+> 		default:
+> //			std::string stg_str = static_cast<std::ostringstream*>( &(std::ostringstream() << this->check_stage()) )->str();
+> 			utility_exit_with_message("Invalid stage number: " + ObjexxFCL::string_of(this->check_stage()));
+> 			break;
+> 	}
+> 
+> 	alpha = std::pow( ( FinalTemp / InitialTemp ), (1.0 / CurrentStageLength) );
+> 	this -> reset_SA_temp();
+> 	TR<< "Current stage length (function evals) estimated as " << CurrentStageLength << std::endl;
+> 
+> }
+> 
+> //reset SA temp to initial value. called by initialise_SA
+> void
+> MonteCarlo::reset_SA_temp() {
+> 	this->set_temperature( InitialTemp );
+> 	SA_trace << "RESET: temperature_ = " << this->temperature() << std::endl;
+> }
+> 
+> //update SA temp depending on L attempt number ***for current stage!***
+> //In the bilevel setup, we raise alpha to the nth power, where n is the
+> //	the number of attempts at the high level seen so far.
+> //Then you multiply that quantity to the initial temperature.
+> void
+> MonteCarlo::update_SA_temp( Size attempt_number ){
+> 	// divide the range of temperatures into 4: [InitialTemp,7], (7,4], (4,FinalTemp), and use the constant T=FinalTemp segment as a 4th.
+> 	// if temp reaches one of the key values, output current state of Lcounters, then reset.
+> 	Real const key1(7.0);
+> 	Real const key2(4.0);
+> 	Real const key3(FinalTemp);
+> 
+> 	Real const last_temperature = this->temperature();
+> 
+> 	std::stringstream filename_stream;
+> //	char* filename;
+> 	std::ofstream outfile;
+> 
+> 	if (last_temperature > this->FinalTemp) { //temp should not go below FinalTemp
+> 
+> 		Real const proposed_temp = InitialTemp * std::pow(alpha, int(attempt_number) ); // is this faster/more accurate than just temp *= alpha ?
+> 
+> 		if (proposed_temp > FinalTemp){
+> 			this->set_temperature( proposed_temp );
+> 		} else {
+> 			this->set_temperature( FinalTemp );
+> 		}
+> //		SA_trace << "COOL: temperature_ = " << this->temperature() << std::endl;
+> 	}
+> 	else {
+> 		SA_trace << "Temp stays steady at " << this->temperature() << std::endl;
+> 	}
+> 
+> 	if(this->bGenerateTraj){
+> 		// if temp reaches one of the key values, output current state of Lcounters, then reset it.
+> 		// name output files with stage and range
+> 		filename_stream << "Lcounters_";
+> 
+> 		if (last_temperature >= key1 && this->temperature() < key1 ){
+> 			SA_trace << "temp crossed key1; output Lcounters and reset." << std::endl;
+> 			filename_stream << "stg" << this->check_stage() << "_range1.txt";
+> 			outfile.open(filename_stream.str().c_str(), std::ios::out);
+> 			print_Lcounters(outfile);
+> 			outfile.close();
+> 			reset_Lcounters();
+> 		}
+> 		else if (last_temperature >= key2 && this->temperature() < key2 ){
+> 			SA_trace << "temp crossed key2; output Lcounters and reset." << std::endl;
+> 			filename_stream << "stg" << this->check_stage() << "_range2.txt";
+> 			outfile.open(filename_stream.str().c_str(), std::ios::out);
+> 			print_Lcounters(outfile);
+> 			outfile.close();
+> 			reset_Lcounters();
+> 		}
+> 		else if (last_temperature > key3 && this->temperature() == key3 ){
+> 			SA_trace << "temp crossed key3; output Lcounters and reset." << std::endl;
+> 			filename_stream << "stg" << this->check_stage() << "_range3.txt";
+> 			outfile.open(filename_stream.str().c_str(), std::ios::out);
+> 			print_Lcounters(outfile);
+> 			outfile.close();
+> 			reset_Lcounters();
+> 		}
+> 	}
+> 
+> }
+> 
+> void
+> MonteCarlo::set_AttemptsInCurrentStage( Size countL, Size countF ) {
+> 	Lattempts_CurrentStage = countL;
+> 	Fattempts_CurrentStage = countF;
+> 	Func_evals = 0;
+> }
+> 
+> void
+> MonteCarlo::setPoseIsLeader( Pose& pose, bool const setting){
+> 	pose.Pose_IsLeader = setting;
+> 	//need to set these since poses get copied
+> 	this->LMin->Pose_IsLeader = setting;
+> 	this->last_accepted_pose_->Pose_IsLeader = setting;
+> 	this->lowest_score_pose_->Pose_IsLeader = setting;
+> }
+> 
+> bool
+> MonteCarlo::make_L_filter (Pose& pose, Size conditionNumber) {
+> 	//only call in Leader
+> 	//based on the condition number, do a few different things
+> 	switch (conditionNumber) {
+> 		case 0:
+> 		case 3:
+> 		case 100:
+> 			//			TR << "SMK : Proposed L move rejected." << std::endl;
+> 			return false;
+> 			break;
+> 		case 1: //for now just accept as is.
+> 			//eventually we'll want to modify all residues in this loop
+> 			//get loop number.
+> 			if (loops_involved.size()==1){
+> 				CurrentLoopID = loops_involved[0];
+> 				return true;
+> 			}
+> 			else return false;
+> 			break;
+> 		case 2: //change only L residues
+> 			for(unsigned i=0; i<changed_res.size(); i++) {
+> 				if(secstruct_smk[changed_res.at(i)] != 'L') {
+> 					set_torsions_to_last_accepted(pose, changed_res.at(i));
+> 				}
+> 			}
+> 			if (loopstarts_found.empty() ) CurrentLoopID = loopends_found[0];
+> 			if (loopends_found.empty() ) CurrentLoopID = loopstarts_found[0];
+> 			return true;
+> 			break;
+> 		case 4: //change only L residues. if we accept as is, it allows for F to violate the constraint set by L
+> 			for(unsigned i=0; i<changed_res.size(); i++) {
+> 				if(secstruct_smk[changed_res.at(i)] != 'L') {
+> 					set_torsions_to_last_accepted(pose, changed_res.at(i));
+> 				}
+> 			}
+> 			CurrentLoopID = loops_involved[0];
+> 			return true;
+> 			break;
+> 		case 5: //multiple loops spanned, possibly with extra loop bits at the ends.
+> 			//choose one fully spanned loop at random and mutate that
+> 			if (loops_spanned.size() == 1) {
+> //				TR << "Only one loop spanned; changing only that." << std::endl;
+> 				for(unsigned i=0; i<changed_res.size(); i++) {
+> 					if (changed_res.at(i) >= LoopInfo[loops_spanned[0]][0] && changed_res.at(i) <= LoopInfo[loops_spanned[0]][1])
+> 					{	continue; }
+> 					set_torsions_to_last_accepted (pose, changed_res.at(i));
+> 				}
+> 				CurrentLoopID = loops_spanned[0];
+> 			}
+> 			else {
+> 				Size choice = Size(smk_RG.random_range( 0, loops_spanned.size()-1 ) );
+> 
+> 				TR<< "More than one loop spanned, mutating loop ID " << choice
+> 						<< " ( pos " <<  LoopInfo[choice][0] << " to " << LoopInfo[choice][1] << ")" <<std::endl;
+> 
+> 				for(unsigned i=0; i<changed_res.size(); i++) {
+> 					if (changed_res.at(i) >= LoopInfo[choice][0] && changed_res.at(i) <= LoopInfo[choice][1])
+> 					{	continue; }
+> 					set_torsions_to_last_accepted (pose, changed_res.at(i));
+> 				}
+> 				CurrentLoopID = choice;
+> 			}
+> 			return true;
+> 			break;
+> 		default:
+> 			return false;
+> 			break;
+> 	}
+> 	return false;
+> }
+> 
+> void
+> MonteCarlo::set_changed_res (Pose& pose) {
+> 
+> 	changed_res.clear();
+> 
+> 	//find which residues are changed
+> 	//this is more robust than comparing all residues in pose and last_accepted_pose_ and is much faster. SMK 18/08/2014
+> 	//Changed to accomodate variable move sizes. SMK 14/01/2015
+> 
+> 	for(Size ir = pose.move_start; ir <= pose.move_end; ir++)
+> 	{
+> 		changed_res.push_back(ir);
+> 	}
+> 
+> 	if (pose.Pose_IsLeader)
+> 		this->movesize = pose.move_end - pose.move_start + 1;
+> 	//	TR<< "SMK: movesize set to " << movesize << std::endl;
+> 
+> }
+> 
+> Size
+> MonteCarlo::analyse_insert_for_loops (Pose& pose) {
+> 	/*	return a "condition number":
+> 	 * 	0: no valid loop residues at all in insert; reject
+> 	 * 	1: loop is longer than insert_length; need to sample all residues. (for now, just accept L residue changes)
+> 	 * 	2: (2a or 2b) : partly covering ONE loop. change L residues only
+> 	 * 	3: an SS elem is spanned with a bit of loop at either end; reject.
+> 	 * 	4: ONE loop spanned completely, with bits of SS at either end. Change only loop residues.
+> 	 * 	5: More than one loop spanned completely. select one at random and mutate.
+> 	 * 	100: Invalid state; should never be reached.
+> 	 */
+> 
+> 	loop_res_in_insert.clear();
+> 	loopstarts_found.clear();
+> 	loopends_found.clear();
+> 	n_loopres_in_insert = 0;
+> 	loops_spanned.clear();
+> 	loops_involved.clear();
+> 
+> 	Size insert_length = changed_res.size();
+> 	if ( changed_res.size() != (pose.move_end - pose.move_start + 1) ){
+> 		std::cerr << "SMK ERROR: changed_res:" << std::endl;
+> 		for (std::vector < Size > :: iterator it=changed_res.begin(); it!=changed_res.end(); ++it){
+> 			std::cerr << (*it) << " ";
+> 		}
+> 		std::cerr << std::endl;
+> 		std::cerr << "move_start = " << pose.move_start << ", move_end = " << pose.move_end << std::endl;
+> 		utility_exit_with_message("SMK: changed_res.size() != move size. This shouldn't happen.");
+> 	}
+> 
+> 	//init all elems to false
+> 	loop_res_in_insert = std::vector < bool > (insert_length, false);
+> 
+> 	//now get all info about where the loops are and how the fragment sits in relation to them
+> 	for(unsigned i=0; i<insert_length; i++) {
+> 
+> 		if(secstruct_smk[changed_res.at(i)] == 'L') {
+> 			loop_res_in_insert.at(i) = true;
+> 			n_loopres_in_insert++;
+> 			int loop_num = which_loop(changed_res.at(i));
+> 			//    		TR << "Loop " << loop_num << " is involved." << std::endl;
+> 			//    		if (loops_involved.empty()) loops_involved.push_back(loop_num);
+> 			//    		else
+> 			nodup_push_to_vector(loops_involved, loop_num);
+> 		}
+> 
+> 		for (unsigned n=0; n<n_loops; n++){
+> 			if (changed_res.at(i) == LoopInfo[n][0]) {
+> 				//this is a start position. log the number of the loop
+> 				loopstarts_found.push_back(n);
+> 			}
+> 			if (changed_res.at(i) == LoopInfo[n][1]) {
+> 				//this is an end position. log the number of the loop
+> 				loopends_found.push_back(n);
+> 			}
+> 		}
+> 	}
+> 
+> 	for (Size it=0; it < loopstarts_found.size(); ++it) {
+> 		for (Size jt=0; jt < loopends_found.size(); ++jt) {
+> 			if ( loopstarts_found.at(it)== loopends_found.at(jt) ) {
+> 				//    			TR << "loop " << loopstarts_found.at(it) << " is spanned." << std::endl;
+> 				//    			if (loops_spanned.empty() ) loops_spanned.push_back(loopstarts_found.at(it) );
+> 				//    			else
+> 				nodup_push_to_vector(loops_spanned, loopstarts_found.at(it) );
+> 			}
+> 		}
+> 	}
+> 
+> 	//now evaluate the conditions.
+> 	//TOO MUCH BRANCHING!!! could be slow.
+> 	if (n_loopres_in_insert==0) return 0;
+> 
+> 	if ( loopstarts_found.empty() ) {
+> 		if (loopends_found.empty()) {
+> 			//both empty and n_loopres_in_insert!=0 : condition 1
+> 			//check that a terminal loop isnt involved; use loops_involved
+> 			if (loops_involved.size() == 1 && loops_involved[0] == -1) return 0;
+> 			return 1; //FIXME: Minor: in a 'condition 3' that involves one C-terminal loop, you can get to this line incorrectly.
+> 		}
+> 		else {
+> 			//condition 2b or 1; use Looplengths to determine
+> 			if (loops_involved.size() == 1 && loops_involved[0] == -1) return 0;
+> 			if (LoopLengths.at(loopends_found.at(0)) > changed_res.size() ) {
+> 				//this should work; you can't find two loopends without finding a loopstart in between
+> 				return 1;
+> 			} else return 2;
+> 		}
+> 	}
+> 	else if ( loopends_found.empty() ) {
+> 		if (!loopstarts_found.empty()) {
+> 			//condition 2a or 1
+> 			if (loops_involved.size() == 1 && loops_involved[0] == -1) return 0;
+> 			if (LoopLengths.at(loopstarts_found.at(0)) > changed_res.size() ) {
+> 				//this should work; you can't find two loopstarts without finding a loopend in between
+> 				return 1;
+> 			} else return 2;
+> 		}
+> 	}
+> 	else { //neither are empty; need a few more checks
+> 
+> 
+> 		//now, based on the length of loops_spanned, we get 3 conditions:
+> 		Size n_spanned = loops_spanned.size();
+> 
+> 		if (n_spanned == 0) return 3;
+> 		else if (n_spanned == 1) {
+> 			if (loops_involved.size() == 1) return 4;
+> 			else return 5;
+> 		}
+> 		else if (n_spanned > 1) return 5;
+> 		else utility_exit_with_message ("ERROR: didn't catch a valid value for n_spanned");
+> 	}
+> 	return 100;
+> }
+> 
+> int
+> MonteCarlo::which_loop(Size residue) {
+> 	int result = -1;
+> 	if (n_loops==0) return result;
+> 
+> 	for (unsigned i=0; i < n_loops; i++) {
+> 		if (residue >= LoopInfo[i][0] && residue <= LoopInfo[i][1])
+> 			return int(i);
+> 	}
+> 
+> 	return result;
+> }
+> 
+> //void
+> //MonteCarlo::initialise_archive_conditions(){
+> //	this->add_archive_condition(new LowEnergyCondition);
+> //}
+> 
+> 
+> void
+> MonteCarlo::outputAllArchiveStructs(std::string info){
+> 	for (std::vector< MGFUtils::MGFArchive >::iterator it = Archives.begin(); it != Archives.end(); ++it){
+> 		(*it).dump_scored_archive_pdbs(score_function(), info);
+> 	}
+> }
+> 
+> void
+> MonteCarlo::prune_all_archives_to_size (int nstruct){
+> 	for (std::vector< MGFUtils::MGFArchive >::iterator it = Archives.begin(); it != Archives.end(); ++it){
+> 		(*it).reduce_archive(nstruct);
+> 	}
+> }
+> 
+> void
+> MonteCarlo::change_all_archive_scorefxns (std::string stage_tag){
+> 	for (std::vector< MGFUtils::MGFArchive >::iterator it = Archives.begin(); it != Archives.end(); ++it){
+> 		(*it).replace_evaluator(stage_tag);
+> 	}
+> }
+> 
+> void
+> MonteCarlo::add_to_all_archives(Pose& pose) {
+> 	for (std::vector< MGFUtils::MGFArchive >::iterator it = Archives.begin(); it != Archives.end(); ++it){
+> 		(*it).add_pose(pose);
+> 	}
+> }
+> 
+> void
+> MonteCarlo::resetAllArchiveReductorCounts(){
+> 	for (std::vector< MGFUtils::MGFArchive >::iterator it = Archives.begin(); it != Archives.end(); ++it){
+> 			(*it).setReductorCalls(0);
+> 		}
+> }
+> 
+> void
+> MonteCarlo::writeAllArchiveReductorCounts(std::string filename){
+> 	//default is stats.txt; this is always written but only once at the end of stg3
+> 
+> 	std::ofstream fout (filename.c_str(), std::ios::app);
+> 	fout << "Stage " << check_stage() << ":" << std::endl;
+> 	for (std::vector< MGFUtils::MGFArchive >::iterator it = Archives.begin(); it != Archives.end(); ++it){
+> 				fout << (*it).get_tag() << " reduced " << (*it).getReductorCalls() << " times" << std::endl;
+> 	}
+> 	fout.close();
+> }
+> 
+> void
+> MonteCarlo::create_archives_from_cmdline(){
+> 
+> 	// TODO: read in a command line flag which specifies a configuration file
+> 	// if no configuration is given, just create a low-energy archive
+> 	// Need to check if we can leave Archives empty.
+> 	// MAKE SURE THAT NO TWO ARCHIVES HAVE THE SAME TAG!!
+> 
+> 	// TODO: trajectory output style may change to track evolution of archives
+> 	// The "newness" indicator will be used to determine the output of LMins.
+> 	// see if it is possible to extend it to multi-archive setups.
+> 
+> 	// 10,10 for energy_std since the same result is achieved regardless of the value of max archive size.
+> 	// This also holds true for SR or SRCM with SR_PROB=1.
+> 
+> 	// Currently only an energy-based archive is enabled.
+> 	// ELITIST_RANDOM and SRCM archiving strategies are discussed in Shaun Kandathil's PhD Thesis.
+> 	// all other archivers are experimental, and use ideas from multimodal optimisation.
+> 
+> 	Archives.push_back(*(new MGFUtils::MGFArchive(10, 10, "ENERGY", "_energy_std")));
+> 
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "ELITIST_RANDOM", "_Erandom")));
+> 
+> //	IMPORTANT: when setting archive parameters, dereference Archives.back(). DO NOT dereference Archives.end() !!!
+> 
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "ENERGY_DA", "_energy_DA_5.0")));
+> //	Archives.back().set_DUPLICATE_RMSD_CUTOFF(5.0);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "ENERGY_DA", "_energy_DA_3.0")));
+> //	Archives.back().set_DUPLICATE_RMSD_CUTOFF(3.0);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "DEGRADATION", "_degradation_5.0")));
+> //	Archives.back().set_NICHE_RADIUS(5.0);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "DEGRADATION", "_degradation_3.0")));
+> //	Archives.back().set_NICHE_RADIUS(3.0);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "DIVERSITY", "_diversity")));
+> //
+> 	// setting SR prob to 1.0 is conceptually equivalent to the ENERGY archive strategy and should give identical results, except SR_1.0 is slower.
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SR", "_SR_1.0")));
+> //	Archives.back().set_SR_PROB(1.0);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SR", "_SR_0.7")));
+> //	Archives.back().set_SR_PROB(0.7);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SR", "_SR_0.6")));
+> //	Archives.back().set_SR_PROB(0.6);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SR", "_SR_0.5")));
+> //	Archives.back().set_SR_PROB(0.5);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SR", "_SR_0.4")));
+> //	Archives.back().set_SR_PROB(0.4);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SR", "_SR_0.3")));
+> //	Archives.back().set_SR_PROB(0.3);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SR", "_SR_0.0")));
+> //	Archives.back().set_SR_PROB(0.0);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SRCM", "_SRCM_0.2")));
+> //	Archives.back().set_SR_PROB(0.2);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SRCM", "_SRCM_0.3")));
+> //	Archives.back().set_SR_PROB(0.3);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SRCM", "_SRCM_0.4")));
+> //	Archives.back().set_SR_PROB(0.4);
+> 
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SRCM", "_SRCM_0.5")));
+> //	Archives.back().set_SR_PROB(0.5);
+> 
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SRCM", "_SRCM_0.6")));
+> //	Archives.back().set_SR_PROB(0.6);
+> //
+> //	Archives.push_back(*(new MGFUtils::MGFArchive(100, 200, "SRCM", "_SRCM_0.7")));
+> //	Archives.back().set_SR_PROB(0.7);
+> 
+> }
+> 
+> /*
+> void
+> MonteCarlo::unfold_loop(Pose& pose)
+> {
+>     if ( last_accept_ >= (int) heat_after_cycles_ ) {
+> 
+>         // output structure prior to unfold step; may be a minor local minimum
+>         std::stringstream unfoldtempstring;
+>         std::string unfoldFilename;
+> 
+>         unfoldtempstring << "preunfold_"<<++n_unfolds<<".PDB";
+>         unfoldFilename = unfoldtempstring.str();
+>         pose.dump_pdb(unfoldFilename);
+> 
+> //        n_accepts_since_last_unfold = 0;
+> 
+>         //choose a loop region at random.
+>         //Note: RNG returns in the range [0,1). Size(x) is equivalent to floor(x).
+>         //      So if e.g. you have n_loops=10 loops numbered 0 through 9, this gives the whole range of options.
+>         Size unfold_loopid = Size(mc_RG.uniform()*Real(n_loops));
+>         TR << "SMK: unfolding loop " << unfold_loopid << std::endl;
+> 
+>         //reset the torsion angle values to initial (open) values
+>         //repeat for all residues in the SS element
+>         for (Size pos = LoopInfo[unfold_loopid][0]; pos <= LoopInfo[unfold_loopid][1]; pos++) {
+>             pose.set_phi( pos, -150.0 );
+>             pose.set_psi( pos, 150.0 );
+>             pose.set_omega( pos, 180.0 );
+>         }
+> 
+>         last_accept_ = -1;
+> 
+>         //score the pose and set this as the last_accepted
+>         score = ( (*score_function_)( pose ) );
+> 
+>         ( *last_accepted_pose_ ) = pose;
+>         last_accepted_score_ = score;
+>     }
+>     ++last_accept_;
+> }
+>  */
+> 
+> 
+> 
+> //SMK END

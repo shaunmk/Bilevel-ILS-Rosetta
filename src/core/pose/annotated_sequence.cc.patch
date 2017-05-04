@@ -1,0 +1,8 @@
+250a251,257
+> 	//SMK BEGIN
+> 	// initialise new pose members with some default values
+> 	Size const n_residues = pose.n_residue();
+> 	pose.pdb_source_res.assign(n_residues, 0);
+> 	pose.pdb_sources.assign(n_residues, "NOPDB");
+> 	//SMK END
+> 

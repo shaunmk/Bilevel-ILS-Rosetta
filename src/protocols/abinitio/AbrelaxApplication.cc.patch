@@ -1,0 +1,746 @@
+64c64
+< 	#include <ctime>
+---
+> #include <ctime>
+168a169,171
+> //SMK headers
+> #include <MGFUtils/MGFArchive.hh>
+> 
+340c343
+< 	#ifdef BOINC
+---
+> #ifdef BOINC
+342c345
+< 	#endif
+---
+> #endif
+373c376
+< 	using namespace core::scoring::constraints; // has to be core, now that protocols::scoring is visible
+---
+> using namespace core::scoring::constraints; // has to be core, now that protocols::scoring is visible
+398,409c401,412
+< 	silent_score_file_( NULL ),
+< 	native_pose_( NULL ),
+< 	pca_( NULL ),
+< 	bRelax_ ( false ),
+< 	cstset_( NULL ),
+< 	jump_def_ ( NULL ),
+< 	templates_( NULL ),
+< 	fragset_large_( NULL ),
+< 	fragset_small_top25_( NULL ),
+< 	fragset_small_( NULL ),
+< 	evaluator_ ( new MetaPoseEvaluator ),
+< 	abrelax_checkpoints_( "Abrelax" )
+---
+> 					silent_score_file_( NULL ),
+> 					native_pose_( NULL ),
+> 					pca_( NULL ),
+> 					bRelax_ ( false ),
+> 					cstset_( NULL ),
+> 					jump_def_ ( NULL ),
+> 					templates_( NULL ),
+> 					fragset_large_( NULL ),
+> 					fragset_small_top25_( NULL ),
+> 					fragset_small_( NULL ),
+> 					evaluator_ ( new MetaPoseEvaluator ),
+> 					abrelax_checkpoints_( "Abrelax" )
+417,433c420,436
+< 	silent_score_file_( src.silent_score_file_ ),
+< 	native_pose_( src.native_pose_ ),
+< 	loops_in_( src.loops_in_ ),
+< 	pca_( src.pca_ ),
+< 	bRelax_( src.bRelax_ ),
+< 	sequence_( src.sequence_ ),
+< 	cstset_( src.cstset_ ),
+< 	membrane_jumps_( src.membrane_jumps_ ),
+< 	jump_def_ ( src.jump_def_ ),
+< 	ss_def_( src.ss_def_ ),
+< 	templates_( src.templates_ ),
+< 	fragset_large_( src.fragset_large_ ),
+< 	fragset_small_top25_( src.fragset_small_top25_ ),
+< 	fragset_small_( src.fragset_small_ ),
+< 	fragset_templates_( src.fragset_templates_ ),
+< 	evaluator_( src.evaluator_ ),
+< 	abrelax_checkpoints_( src.abrelax_checkpoints_ )
+---
+> 					silent_score_file_( src.silent_score_file_ ),
+> 					native_pose_( src.native_pose_ ),
+> 					loops_in_( src.loops_in_ ),
+> 					pca_( src.pca_ ),
+> 					bRelax_( src.bRelax_ ),
+> 					sequence_( src.sequence_ ),
+> 					cstset_( src.cstset_ ),
+> 					membrane_jumps_( src.membrane_jumps_ ),
+> 					jump_def_ ( src.jump_def_ ),
+> 					ss_def_( src.ss_def_ ),
+> 					templates_( src.templates_ ),
+> 					fragset_large_( src.fragset_large_ ),
+> 					fragset_small_top25_( src.fragset_small_top25_ ),
+> 					fragset_small_( src.fragset_small_ ),
+> 					fragset_templates_( src.fragset_templates_ ),
+> 					evaluator_( src.evaluator_ ),
+> 					abrelax_checkpoints_( src.abrelax_checkpoints_ )
+454c457
+< 			new constraints_additional::NamedAtomPairConstraintCreator );
+---
+> 				new constraints_additional::NamedAtomPairConstraintCreator );
+486c489
+< 			"Error: can't read sequence! Use -in::file::fasta sequence.fasta or -in::file::native native.pdb!"
+---
+> 				"Error: can't read sequence! Use -in::file::fasta sequence.fasta or -in::file::native native.pdb!"
+499c502
+< 		clash_calculator = new protocols::toolbox::pose_metric_calculators::ClashCountCalculator( 2.0 );
+---
+> 	clash_calculator = new protocols::toolbox::pose_metric_calculators::ClashCountCalculator( 2.0 );
+547c550
+< 			new loops::loop_closure::ccd::SlidingWindowLoopClosure( fragset_small_, scorefxn, movemap );
+---
+> 				new loops::loop_closure::ccd::SlidingWindowLoopClosure( fragset_small_, scorefxn, movemap );
+551c554
+< 				new loops::loop_closure::ccd::WidthFirstSlidingWindowLoopClosure( fragset_small_, scorefxn, movemap );
+---
+> 					new loops::loop_closure::ccd::WidthFirstSlidingWindowLoopClosure( fragset_small_, scorefxn, movemap );
+581,585c584,588
+< 				protocols::idealize::IdealizeMover idealizer;
+< 				idealizer.fast( false );
+< 				pose.constraint_set( NULL );
+< 				idealizer.apply( pose );
+< 				bIdeal = true;
+---
+> 			protocols::idealize::IdealizeMover idealizer;
+> 			idealizer.fast( false );
+> 			pose.constraint_set( NULL );
+> 			idealizer.apply( pose );
+> 			bIdeal = true;
+604,607c607,610
+< 	pose::Pose &pose,
+< 	core::scoring::ScoreFunction const& scorefxn,
+< 	std::string tag,
+< 	io::silent::SilentStruct &pss ) const
+---
+> 		pose::Pose &pose,
+> 		core::scoring::ScoreFunction const& scorefxn,
+> 		std::string tag,
+> 		io::silent::SilentStruct &pss ) const
+615,616c618,619
+< 						<< "              CLEAR POSE CACHE                           \n"
+< 						<< "***********************************************************" << std::endl;
+---
+> 				<< "              CLEAR POSE CACHE                           \n"
+> 				<< "***********************************************************" << std::endl;
+653,654c656,657
+< 				// reads and sets constraints
+< 				cstset_ = ConstraintIO::get_instance()->read_constraints(core::scoring::constraints::get_cst_file_option(),	new ConstraintSet, pose	);
+---
+> 			// reads and sets constraints
+> 			cstset_ = ConstraintIO::get_instance()->read_constraints(core::scoring::constraints::get_cst_file_option(),	new ConstraintSet, pose	);
+676c679
+< 					utility_exit_with_message(" strand_constraint nees a topology info: either via templates or -topology_file ");
+---
+> 				utility_exit_with_message(" strand_constraint nees a topology info: either via templates or -topology_file ");
+703,704c706,707
+< 						<< "*********************  CULL CONSTRAINTS WITH NATIVE STRUCTURE *********************\n"
+< 						<< "************************************************************************************\n" << std::endl;
+---
+> 				<< "*********************  CULL CONSTRAINTS WITH NATIVE STRUCTURE *********************\n"
+> 				<< "************************************************************************************\n" << std::endl;
+707c710
+< 			filtered, *native_pose_, option[ constraints::cull_with_native ]() );
+---
+> 				filtered, *native_pose_, option[ constraints::cull_with_native ]() );
+734,735c737,738
+< 		core::fragment::FragSetCOP fragset_large,
+< 		core::kinematics::MoveMapCOP movemap
+---
+> 			core::fragment::FragSetCOP fragset_large,
+> 			core::kinematics::MoveMapCOP movemap
+799c802
+< 						it->fill_pose( pose,
+---
+> 					it->fill_pose( pose,
+801,802c804,805
+< 							*(chemical::ChemicalManager::get_instance()->residue_type_set( chemical::FA_STANDARD )) :
+< 							*(chemical::ChemicalManager::get_instance()->residue_type_set( chemical::CENTROID ) ));
+---
+> 									*(chemical::ChemicalManager::get_instance()->residue_type_set( chemical::FA_STANDARD )) :
+> 									*(chemical::ChemicalManager::get_instance()->residue_type_set( chemical::CENTROID ) ));
+896c899
+< 		option[ OptionKeys::abinitio::fastrelax ]();
+---
+> 			option[ OptionKeys::abinitio::fastrelax ]();
+953,958c956,961
+<      if ( basic::options::option[ basic::options::OptionKeys::in::fix_disulf ].user() ) {
+< 			 utility::vector1< std::pair<Size, Size> > disulfides;
+< 			 core::io::raw_data::DisulfideFile ds_file( basic::options::option[ basic::options::OptionKeys::in::fix_disulf ]() );
+< 			 ds_file.disulfides( disulfides, pose);
+< 			 pose.conformation().fix_disulfides( disulfides );
+<      }
+---
+> 		if ( basic::options::option[ basic::options::OptionKeys::in::fix_disulf ].user() ) {
+> 			utility::vector1< std::pair<Size, Size> > disulfides;
+> 			core::io::raw_data::DisulfideFile ds_file( basic::options::option[ basic::options::OptionKeys::in::fix_disulf ]() );
+> 			ds_file.disulfides( disulfides, pose);
+> 			pose.conformation().fix_disulfides( disulfides );
+> 		}
+1107,1109c1110,1112
+< 		extended_pose,
+< 		sequence,
+< 		*( chemical::ChemicalManager::get_instance()->residue_type_set( chemical::CENTROID ))
+---
+> 			extended_pose,
+> 			sequence,
+> 			*( chemical::ChemicalManager::get_instance()->residue_type_set( chemical::CENTROID ))
+1128,1129c1131,1132
+< 						<< extended_pose.psi( 8 ) << " " << extended_pose.omega( 8 )
+< 						<< std::endl;
+---
+> 			<< extended_pose.psi( 8 ) << " " << extended_pose.omega( 8 )
+> 			<< std::endl;
+1159,1161c1162,1164
+< 		option[ OptionKeys::abinitio::number_9mer_frags ](),
+< 		option[ OptionKeys::frags::nr_large_copies ](),
+< 		option[ OptionKeys::frags::annotate ]()
+---
+> 			option[ OptionKeys::abinitio::number_9mer_frags ](),
+> 			option[ OptionKeys::frags::nr_large_copies ](),
+> 			option[ OptionKeys::frags::annotate ]()
+1165,1169c1168,1172
+< 	fragset_small_top25_ = FragmentIO(
+< 								option[ OptionKeys::abinitio::number_9mer_frags ],
+< 								1, //nr_copies
+< 								option[ OptionKeys::frags::annotate ]
+< 								).read_data( frag_small_file );
+---
+> 		fragset_small_top25_ = FragmentIO(
+> 				option[ OptionKeys::abinitio::number_9mer_frags ],
+> 				1, //nr_copies
+> 				option[ OptionKeys::frags::annotate ]
+> 		).read_data( frag_small_file );
+1172,1174c1175,1177
+< 		option[ OptionKeys::abinitio::number_3mer_frags ],
+< 		1, //nr_copies
+< 		option[ OptionKeys::frags::annotate ]
+---
+> 			option[ OptionKeys::abinitio::number_3mer_frags ],
+> 			1, //nr_copies
+> 			option[ OptionKeys::frags::annotate ]
+1195,1198c1198,1201
+< 								fragset_large_,
+< 								new FragData( new BBTorsionSRFD, fragset_large_->max_frag_length() ),
+< 								min_nr_frags,
+< 								nr_large_copies );
+---
+> 						fragset_large_,
+> 						new FragData( new BBTorsionSRFD, fragset_large_->max_frag_length() ),
+> 						min_nr_frags,
+> 						nr_large_copies );
+1205,1206c1208,1209
+< 								*fragset_large_,
+< 								new FragData( new BBTorsionSRFD, 18 )
+---
+> 						*fragset_large_,
+> 						new FragData( new BBTorsionSRFD, 18 )
+1210,1211c1213,1214
+< 								*fragset_large_,
+< 								new FragData( new BBTorsionSRFD, 24 )
+---
+> 						*fragset_large_,
+> 						new FragData( new BBTorsionSRFD, 24 )
+1221,1224c1224,1227
+< 								fragset_small_,
+< 								new FragData( new BBTorsionSRFD, fragset_small_->max_frag_length() ),
+< 									min_nr_frags,
+< 								nr_small_copies );
+---
+> 					fragset_small_,
+> 					new FragData( new BBTorsionSRFD, fragset_small_->max_frag_length() ),
+> 					min_nr_frags,
+> 					nr_small_copies );
+1235c1238
+< 			new FragData( new BBTorsionSRFD, fragset_large_->max_frag_length() ) );
+---
+> 				new FragData( new BBTorsionSRFD, fragset_large_->max_frag_length() ) );
+1237c1240
+< 			new FragData( new BBTorsionSRFD, fragset_small_->max_frag_length() ) );
+---
+> 				new FragData( new BBTorsionSRFD, fragset_small_->max_frag_length() ) );
+1281c1284
+< 	void AbrelaxApplication::setup_jumps(	pose::Pose const& extended_pose ) {
+---
+> void AbrelaxApplication::setup_jumps(	pose::Pose const& extended_pose ) {
+1437,1438c1440,1441
+< 		option[ OptionKeys::abinitio::fastrelax ]() ||
+< 		option[ OptionKeys::abinitio::multifastrelax ]();
+---
+> 			option[ OptionKeys::abinitio::fastrelax ]() ||
+> 			option[ OptionKeys::abinitio::multifastrelax ]();
+1530,1533c1533,1536
+< 																	extended_pose,
+< 																	extended_pose.is_fullatom(),
+< 																	sampler->start_from_centroid(),
+< 																	sampler->return_centroid()
+---
+> 				extended_pose,
+> 				extended_pose.is_fullatom(),
+> 				sampler->start_from_centroid(),
+> 				sampler->return_centroid()
+1544c1547
+< 					new loops::loop_closure::ccd::WidthFirstSlidingWindowLoopClosure;
+---
+> 						new loops::loop_closure::ccd::WidthFirstSlidingWindowLoopClosure;
+1574c1577
+<             loops::Loops extended_loops_in( filename ); // <== TODO: select these using density score
+---
+> 			loops::Loops extended_loops_in( filename ); // <== TODO: select these using density score
+1593c1596
+< 					);
+---
+> 			);
+1602c1605
+< 					);
+---
+> 			);
+1633,1645c1636,1640
+< 			// it doesn't matter if we have no constraints the extra FoldConstraints part in the Jumping protocl
+< 			// won't do anything
+< 			JumpingFoldConstraintsWrapper* pp;
+< 			pp = new JumpingFoldConstraintsWrapper( fragset_small_, fragset_large_, movemap, jump_def_ );
+< 			if ( native_pose_ ) pp->set_native_pose( native_pose_ ); //to steal native jumps
+< 			pp->set_show_viol_level( option[ constraints::viol_level ] );
+< 			prot_ptr = pp;
+< 		}	else {
+< 			if ( extended_pose.constraint_set()->has_residue_pair_constraints() ) {
+< 				// We have constraints: run xxxFoldConstraints
+< 				tr.Info << "run FoldConstraints....." << std::endl;
+< 				FoldConstraints* pp;
+< 				pp = new FoldConstraints( fragset_small_, fragset_large_, movemap );
+---
+> 				// it doesn't matter if we have no constraints the extra FoldConstraints part in the Jumping protocl
+> 				// won't do anything
+> 				JumpingFoldConstraintsWrapper* pp;
+> 				pp = new JumpingFoldConstraintsWrapper( fragset_small_, fragset_large_, movemap, jump_def_ );
+> 				if ( native_pose_ ) pp->set_native_pose( native_pose_ ); //to steal native jumps
+1648,1649c1643,1652
+< 			} else {
+< 				/// no constraints ---> ClassicAbinitio
+---
+> 			}	else {
+> 				if ( extended_pose.constraint_set()->has_residue_pair_constraints() ) {
+> 					// We have constraints: run xxxFoldConstraints
+> 					tr.Info << "run FoldConstraints....." << std::endl;
+> 					FoldConstraints* pp;
+> 					pp = new FoldConstraints( fragset_small_, fragset_large_, movemap );
+> 					pp->set_show_viol_level( option[ constraints::viol_level ] );
+> 					prot_ptr = pp;
+> 				} else {
+> 					/// no constraints ---> ClassicAbinitio
+1686c1689
+< 	    ( option[basic::options::OptionKeys::score::saxs::ref_pddf ].user() ) ) {
+---
+> 			( option[basic::options::OptionKeys::score::saxs::ref_pddf ].user() ) ) {
+1688,1691c1691,1694
+< 	    protocols::simple_filters::PDDFScoreFilterOP pddf_filter = new protocols::simple_filters::PDDFScoreFilter();
+< 	    bool flag = pddf_filter->apply(pose);
+< 	    core::pose::setPoseExtraScores( pose, "pddf_score", pddf_filter->recent_score());
+< 	    if( ! flag ) return false;	// We need this flag because filter's score must be set before this if statement
+---
+> 		protocols::simple_filters::PDDFScoreFilterOP pddf_filter = new protocols::simple_filters::PDDFScoreFilter();
+> 		bool flag = pddf_filter->apply(pose);
+> 		core::pose::setPoseExtraScores( pose, "pddf_score", pddf_filter->recent_score());
+> 		if( ! flag ) return false;	// We need this flag because filter's score must be set before this if statement
+1695c1698
+< 	    ( option[basic::options::OptionKeys::score::saxs::ref_spectrum ].user() ) ) {
+---
+> 			( option[basic::options::OptionKeys::score::saxs::ref_spectrum ].user() ) ) {
+1697,1700c1700,1703
+< 	    protocols::simple_filters::SAXSScoreFilterOP saxs_filter = new protocols::simple_filters::SAXSScoreFilter();
+< 	    bool flag = saxs_filter->apply(pose);
+< 	    core::pose::setPoseExtraScores( pose, "saxs_score", saxs_filter->recent_score());
+< 	    if( ! flag ) return false;	// We need this flag because filter's score must be set before this if statement
+---
+> 		protocols::simple_filters::SAXSScoreFilterOP saxs_filter = new protocols::simple_filters::SAXSScoreFilter();
+> 		bool flag = saxs_filter->apply(pose);
+> 		core::pose::setPoseExtraScores( pose, "saxs_score", saxs_filter->recent_score());
+> 		if( ! flag ) return false;	// We need this flag because filter's score must be set before this if statement
+1764c1767
+< 			std::back_inserter( input_tags ) );
+---
+> 				std::back_inserter( input_tags ) );
+1803c1806
+< 	#ifdef BOINC
+---
+> #ifdef BOINC
+1805c1808
+< 	#endif
+---
+> #endif
+1809c1812
+< //membrane jumping set up the proper foldtree
+---
+> 		//membrane jumping set up the proper foldtree
+1824c1827
+< 	#ifdef BOINC_GRAPHICS
+---
+> #ifdef BOINC_GRAPHICS
+1827c1830
+< 	#endif
+---
+> #endif
+1863,1864c1866,1867
+< 			&& abinitio_protocol.get_last_move_status() == moves::MS_SUCCESS
+< 			&& !option[ OptionKeys::loopfcst::use_general_protocol ] )
+---
+> 				&& abinitio_protocol.get_last_move_status() == moves::MS_SUCCESS
+> 				&& !option[ OptionKeys::loopfcst::use_general_protocol ] )
+1885c1888
+< 			// run relax if applicable
+---
+> 		// run relax if applicable
+1890c1893
+< 			&& ( !loop_closure_failed || option[ OptionKeys::abinitio::relax_with_jumps ]() );
+---
+> 				&& ( !loop_closure_failed || option[ OptionKeys::abinitio::relax_with_jumps ]() );
+1893,1921c1896,1979
+< 			if ( !fold_pose.is_fullatom() ) {
+< 				pose::Pose const centroid_pose ( fold_pose );
+< 				ResolutionSwitcher res_switch( centroid_pose, false, true, true );
+< 
+< 				if ( option[ OptionKeys::constraints::cst_fa_file ].user() ) 	 res_switch.set_map_cst_from_centroid_to_fa( false ); //will override any attempt to map centroid constraints to full-atom constraints -- use user-defined file instead!
+< 
+< 				res_switch.apply( fold_pose );
+< 
+< 				if ( option[ OptionKeys::constraints::cst_fa_file ].user() ) 	{
+< 					ConstraintSetOP cstset_ = ConstraintIO::get_instance()->read_constraints( get_cst_fa_file_option(), new ConstraintSet, fold_pose );
+< 					fold_pose.constraint_set( cstset_ );
+< 				}
+< 			}
+< 
+< 			if( option[ basic::options::OptionKeys::abinitio::close_loops_by_idealizing ]() ){
+< 				// record cutpoints
+< 				protocols::loops::LoopsOP cloops = new protocols::loops::Loops();
+< 				for ( Size ncut = 1; ncut <= (Size) fold_pose.fold_tree().num_cutpoint(); ncut++ ) {
+< 					Size cutpoint = fold_pose.fold_tree().cutpoint( ncut );
+< 					protocols::loops::Loop newloop (
+< 						 std::max( (int) 1, int(cutpoint - 5) ),
+< 						 std::min( (int) fold_pose.total_residue(), int(cutpoint + 5) ),
+< 						 0
+< 					);
+< 
+< 					if( cloops->size() >= 2 )
+< 					if( newloop.start() <= ( *cloops )[cloops->size()-1].stop() ) newloop.set_start( ( *cloops )[cloops->size()-1].stop() +2 );
+< 					newloop.choose_cutpoint( fold_pose );
+< 					cloops->add_loop( newloop );
+---
+> 			//SMK BEGIN
+> 			//check that abinitio_protocol is indeed ClassicAbinitio
+> 			if(abinitio_protocol.get_name() == "ClassicAbinitio"){
+> 				// I've modified the Protocol class to include a virtual (not pure-virtual) method to return mc_.
+> 				// This allows us to use it here directly
+> 
+> 				// The alternative (without modifying Protocol) is to deep-copy it by dynamic cast
+> 				//				ClassicAbinitio* CA_SMK = dynamic_cast <ClassicAbinitio*> (&abinitio_protocol);
+> 				// then you would access mc().Archives like this:
+> 				//				tr << "SMK: outside ClassicAbinitio: There are " << CA_SMK->mc().Archives.size() << " archives." << std::endl;
+> 				//				tr << "Their names are:" << std::endl;
+> 				//				for(std::vector<MGFUtils::MGFArchive>::iterator it = CA_SMK->mc().Archives.begin(); it != CA_SMK->mc().Archives.end(); ++it){
+> 				//					tr << it->get_tag() << ", size = " << it->get_current_size() << std::endl;
+> 				//				}
+> 				for(std::vector<MGFUtils::MGFArchive>::iterator it = abinitio_protocol.smk_mc()->Archives.begin();
+> 						it != abinitio_protocol.smk_mc()->Archives.end();
+> 						++it){
+> 					//make complete tags just like in ClassicAbinitio
+> 					//each Archive type has a tag.
+> 					std::string const archive_tag = it->get_tag();
+> 					tr << "Processing archive " << archive_tag << ", size = " << it->get_current_size() << std::endl;
+> 
+> 					// 		for each structure in that archive,
+> 					for (int i = 0; i < (it->get_current_size()); ++i){
+> 
+> 						std::stringstream full_tag;
+> 						std::string full_tag_string;
+> 						full_tag << archive_tag << '_' << i+1;
+> 						full_tag_string = full_tag.str();
+> 
+> 						fold_pose = *(it->get_member_pose(i));
+> 
+> 						tr.Info << "SMK PROCESSING ARCHIVE STRUCTURE " << full_tag_string << " FOR RELAX." << std::endl;
+> 
+> 						if ( !fold_pose.is_fullatom() ) {
+> 							pose::Pose const centroid_pose ( fold_pose );
+> 							ResolutionSwitcher res_switch( centroid_pose, false, true, true );
+> 
+> 							if ( option[ OptionKeys::constraints::cst_fa_file ].user() ) 	 res_switch.set_map_cst_from_centroid_to_fa( false ); //will override any attempt to map centroid constraints to full-atom constraints -- use user-defined file instead!
+> 
+> 							res_switch.apply( fold_pose );
+> 
+> 							if ( option[ OptionKeys::constraints::cst_fa_file ].user() ) 	{
+> 								ConstraintSetOP cstset_ = ConstraintIO::get_instance()->read_constraints( get_cst_fa_file_option(), new ConstraintSet, fold_pose );
+> 								fold_pose.constraint_set( cstset_ );
+> 							}
+> 						}
+> 						if ( bCanRelax ) {
+> 							if ( option[ basic::options::OptionKeys::abinitio::multifastrelax ]() ) {
+> 								bEndrun = multi_fast_relax( abinitio_protocol, fullatom_scorefxn, jobdist, curr_nstruct, curr_job );
+> 								bProcessDecoy = false;
+> 								if ( bEndrun ) break;
+> 							} else {
+> 								relax( fold_pose, fullatom_scorefxn, jobdist.get_current_output_tag() );
+> 							}
+> 						} else { //cannot relax
+> 							(*fullatom_scorefxn)( fold_pose );
+> 							if ( option[ basic::options::OptionKeys::abinitio::fastrelax ]() ) {
+> 							} else {
+> 								relax::ClassicRelax().setPoseExtraScores( fold_pose ); // ClassicRelax adds four columns
+> 							}
+> 						} // ifelse bCanRelax
+> 
+> 						//output relaxed structure with tags. full_tag_string already has structure number in it.
+> 						std::stringstream filename;
+> 						filename << "ArchiveStruct" << full_tag_string << "_relaxed.pdb";
+> 						fold_pose.dump_scored_pdb(filename.str(),*(fullatom_scorefxn), "WowSoBilevel");
+> 
+> 					} //for i
+> 				} // for it
+> 			} else { //SMK encapsulated the default behaviour in this block
+> 				//SMK END
+> 				if ( !fold_pose.is_fullatom() ) {
+> 					pose::Pose const centroid_pose ( fold_pose );
+> 					ResolutionSwitcher res_switch( centroid_pose, false, true, true );
+> 
+> 					if ( option[ OptionKeys::constraints::cst_fa_file ].user() ) 	 res_switch.set_map_cst_from_centroid_to_fa( false ); //will override any attempt to map centroid constraints to full-atom constraints -- use user-defined file instead!
+> 
+> 					res_switch.apply( fold_pose );
+> 
+> 					if ( option[ OptionKeys::constraints::cst_fa_file ].user() ) 	{
+> 						ConstraintSetOP cstset_ = ConstraintIO::get_instance()->read_constraints( get_cst_fa_file_option(), new ConstraintSet, fold_pose );
+> 						fold_pose.constraint_set( cstset_ );
+> 					}
+1924,1936c1982,1997
+< 				cloops->auto_choose_cutpoints( fold_pose );
+< 
+< 				// forget about foldtree & cuts
+< 				core::kinematics::FoldTree f_new;
+< 				f_new.simple_tree( fold_pose.total_residue() );
+< 				fold_pose.fold_tree( f_new );
+< 
+< 				//idealize
+< 				protocols::idealize::IdealizeMover idealizer;
+< 				idealizer.fast( false );
+< 				idealizer.apply( fold_pose );
+< 
+< 				relax( fold_pose, fullatom_scorefxn, jobdist.get_current_output_tag() );
+---
+> 				if( option[ basic::options::OptionKeys::abinitio::close_loops_by_idealizing ]() ){
+> 					// record cutpoints
+> 					protocols::loops::LoopsOP cloops = new protocols::loops::Loops();
+> 					for ( Size ncut = 1; ncut <= (Size) fold_pose.fold_tree().num_cutpoint(); ncut++ ) {
+> 						Size cutpoint = fold_pose.fold_tree().cutpoint( ncut );
+> 						protocols::loops::Loop newloop (
+> 								std::max( (int) 1, int(cutpoint - 5) ),
+> 								std::min( (int) fold_pose.total_residue(), int(cutpoint + 5) ),
+> 								0
+> 						);
+> 
+> 						if( cloops->size() >= 2 )
+> 							if( newloop.start() <= ( *cloops )[cloops->size()-1].stop() ) newloop.set_start( ( *cloops )[cloops->size()-1].stop() +2 );
+> 						newloop.choose_cutpoint( fold_pose );
+> 						cloops->add_loop( newloop );
+> 					}
+1938,1943c1999
+< 				if( option[ basic::options::OptionKeys::abinitio::optimize_cutpoints_using_kic ]() ){
+< 					protocols::loops::fold_tree_from_loops( fold_pose, *cloops, f_new, true /* include terminal cutpoints */);
+< 					fold_pose.fold_tree( f_new );
+< 					core::scoring::ScoreFunctionOP refine_scorefxn = fullatom_scorefxn->clone();
+< 					protocols::loops::loop_mover::refine::LoopMover_Refine_KIC refine_kic( cloops, refine_scorefxn );
+< 					refine_kic.apply( fold_pose );
+---
+> 					cloops->auto_choose_cutpoints( fold_pose );
+1945c2001,2002
+< 					// Return fold tree to norml state
+---
+> 					// forget about foldtree & cuts
+> 					core::kinematics::FoldTree f_new;
+1948,1949d2004
+< 				}
+< 			}
+1951,1956c2006,2010
+< 			if ( bCanRelax ) {
+< 				if ( option[ basic::options::OptionKeys::abinitio::multifastrelax ]() ) {
+< 					bEndrun = multi_fast_relax( abinitio_protocol, fullatom_scorefxn, jobdist, curr_nstruct, curr_job );
+< 					bProcessDecoy = false;
+< 					if ( bEndrun ) break;
+< 				} else {
+---
+> 					//idealize
+> 					protocols::idealize::IdealizeMover idealizer;
+> 					idealizer.fast( false );
+> 					idealizer.apply( fold_pose );
+> 
+1958,1966d2011
+< 				}
+< 			} else { //cannot relax
+< 				(*fullatom_scorefxn)( fold_pose );
+< 				if ( option[ basic::options::OptionKeys::abinitio::fastrelax ]() ) {
+< 				} else {
+< 					relax::ClassicRelax().setPoseExtraScores( fold_pose ); // ClassicRelax adds four columns
+< 				}
+< 			}
+< 		} // if ( bRelax_ )
+1968,1971c2013,2024
+< 		//Add contact order to score file as an extra column
+< 		core::scoring::methods::ContactOrderEnergy co_energy;
+< 		Real contact_order = co_energy.calculate_contact_order( fold_pose );
+< 		core::pose::setPoseExtraScores( fold_pose, "co", contact_order );
+---
+> 					if( option[ basic::options::OptionKeys::abinitio::optimize_cutpoints_using_kic ]() ){
+> 						protocols::loops::fold_tree_from_loops( fold_pose, *cloops, f_new, true /* include terminal cutpoints */);
+> 						fold_pose.fold_tree( f_new );
+> 						core::scoring::ScoreFunctionOP refine_scorefxn = fullatom_scorefxn->clone();
+> 						protocols::loops::loop_mover::refine::LoopMover_Refine_KIC refine_kic( cloops, refine_scorefxn );
+> 						refine_kic.apply( fold_pose );
+> 
+> 						// Return fold tree to norml state
+> 						f_new.simple_tree( fold_pose.total_residue() );
+> 						fold_pose.fold_tree( f_new );
+> 					}
+> 				}
+1973,1979c2026,2040
+< 		// process decoy if this hasn't happened yet
+< 		if ( bProcessDecoy ) {
+< 			if( option[ run::checkpoint ]() ){
+< 				core::pose::setPoseExtraScores( fold_pose, "ichkpnt",
+< 						abinitio_protocol.get_checkpoints().get_checkpoint_recoveries() +
+< 						abrelax_checkpoints_.get_checkpoint_recoveries()     );
+< 			}
+---
+> 				if ( bCanRelax ) {
+> 					if ( option[ basic::options::OptionKeys::abinitio::multifastrelax ]() ) {
+> 						bEndrun = multi_fast_relax( abinitio_protocol, fullatom_scorefxn, jobdist, curr_nstruct, curr_job );
+> 						bProcessDecoy = false;
+> 						if ( bEndrun ) break;
+> 					} else {
+> 						relax( fold_pose, fullatom_scorefxn, jobdist.get_current_output_tag() );
+> 					}
+> 				} else { //cannot relax
+> 					(*fullatom_scorefxn)( fold_pose );
+> 					if ( option[ basic::options::OptionKeys::abinitio::fastrelax ]() ) {
+> 					} else {
+> 						relax::ClassicRelax().setPoseExtraScores( fold_pose ); // ClassicRelax adds four columns
+> 					}
+> 				}
+1981,1982d2041
+< 			// analyze result
+< 			io::silent::SilentFileData outsfd;
+1984,1985c2043,2054
+< 			//make sure that number of columns does not change -- ever
+< 			outsfd.strict_column_mode( true );
+---
+> 				//Add contact order to score file as an extra column
+> 				core::scoring::methods::ContactOrderEnergy co_energy;
+> 				Real contact_order = co_energy.calculate_contact_order( fold_pose );
+> 				core::pose::setPoseExtraScores( fold_pose, "co", contact_order );
+> 
+> 				// process decoy if this hasn't happened yet
+> 				if ( bProcessDecoy ) {
+> 					if( option[ run::checkpoint ]() ){
+> 						core::pose::setPoseExtraScores( fold_pose, "ichkpnt",
+> 								abinitio_protocol.get_checkpoints().get_checkpoint_recoveries() +
+> 								abrelax_checkpoints_.get_checkpoint_recoveries()     );
+> 					}
+1987c2056,2057
+< 			io::silent::SilentStructOP pss = io::silent::SilentStructFactory::get_instance()->get_silent_struct_out();
+---
+> 					// analyze result
+> 					io::silent::SilentFileData outsfd;
+1989,2000c2059,2060
+< 			// abinitio produces n_stored structures -- the last one is the same as the final structure n_stored.
+< 			//			Size n_stored( abinitio_protocol.structure_store().size() );
+< 			std::string new_output_tag ( output_tag );
+< 			if ( !passes_filters  && loop_closure_failed ) {
+< 				new_output_tag = "X_"+new_output_tag.substr(2);
+< 			} else if( loop_closure_failed ) {
+< 				new_output_tag = "C_"+new_output_tag.substr(2);
+< 			} else if( !passes_filters ) {
+< 				new_output_tag = "F_"+new_output_tag.substr(2);
+< 			} else if ( abinitio_protocol.get_last_move_status() != moves::MS_SUCCESS ) {
+< 				new_output_tag = "P_"+new_output_tag.substr(2);
+< 			}
+---
+> 					//make sure that number of columns does not change -- ever
+> 					outsfd.strict_column_mode( true );
+2002,2005c2062
+< 			if ( !option[ OptionKeys::abinitio::no_write_failures ]()
+< 				|| ( passes_filters && !loop_closure_failed && abinitio_protocol.get_last_move_status() == moves::MS_SUCCESS ) ) {
+< 				// write to silent file
+< 				process_decoy( fold_pose, fold_pose.is_fullatom() ? *fullatom_scorefxn : *centroid_scorefxn, new_output_tag, *pss );
+---
+> 					io::silent::SilentStructOP pss = io::silent::SilentStructFactory::get_instance()->get_silent_struct_out();
+2007,2015c2064,2075
+< 				// write this to score-file if applicable
+< 				if ( silent_score_file_ ) {
+< 					silent_score_file_ -> write_silent_struct( *pss,  silent_score_file_->filename(), true /* bWriteScoresOnly */ );
+< 				}
+< 				if ( option[ OptionKeys::out::pdb ] ) fold_pose.dump_pdb( std::string(option[ OptionKeys::out::path::path ]())  + "/" + new_output_tag + ".pdb");
+< 				outsfd.add_structure( pss );
+< 				if ( run_time && option[ OptionKeys::abinitio::no_write_failures ]() )	{	 //if we omit decoys we want to count from write-event to write-
+< 					run_time->reset(); //reset clock of TimeEvaluator
+< 				}
+---
+> 					// abinitio produces n_stored structures -- the last one is the same as the final structure n_stored.
+> 					//			Size n_stored( abinitio_protocol.structure_store().size() );
+> 					std::string new_output_tag ( output_tag );
+> 					if ( !passes_filters  && loop_closure_failed ) {
+> 						new_output_tag = "X_"+new_output_tag.substr(2);
+> 					} else if( loop_closure_failed ) {
+> 						new_output_tag = "C_"+new_output_tag.substr(2);
+> 					} else if( !passes_filters ) {
+> 						new_output_tag = "F_"+new_output_tag.substr(2);
+> 					} else if ( abinitio_protocol.get_last_move_status() != moves::MS_SUCCESS ) {
+> 						new_output_tag = "P_"+new_output_tag.substr(2);
+> 					}
+2017c2077,2092
+< 			}
+---
+> 					if ( !option[ OptionKeys::abinitio::no_write_failures ]()
+> 							|| ( passes_filters && !loop_closure_failed && abinitio_protocol.get_last_move_status() == moves::MS_SUCCESS ) ) {
+> 						// write to silent file
+> 						process_decoy( fold_pose, fold_pose.is_fullatom() ? *fullatom_scorefxn : *centroid_scorefxn, new_output_tag, *pss );
+> 
+> 						// write this to score-file if applicable
+> 						if ( silent_score_file_ ) {
+> 							silent_score_file_ -> write_silent_struct( *pss,  silent_score_file_->filename(), true /* bWriteScoresOnly */ );
+> 						}
+> 						//SMK This is where the "final" structure gets output.
+> 						if ( option[ OptionKeys::out::pdb ] ) fold_pose.dump_pdb( std::string(option[ OptionKeys::out::path::path ]())  + "/" + new_output_tag + ".pdb");
+> 						outsfd.add_structure( pss );
+> 
+> 						if ( run_time && option[ OptionKeys::abinitio::no_write_failures ]() )	{	 //if we omit decoys we want to count from write-event to write-
+> 							run_time->reset(); //reset clock of TimeEvaluator
+> 						}
+2019,2020c2094
+< 			jobdist.dump_silent( outsfd ); // does the same thing as: outsfd.write_all( filename ); //cool bulk-writing makes clusters happy
+< 		} //bProcessDecoy ( false if multi-fast_relax )
+---
+> 					}
+2021a2096,2100
+> 					//SMK this writes default.out and score.fsc (I think)
+> 					jobdist.dump_silent( outsfd ); // does the same thing as: outsfd.write_all( filename ); //cool bulk-writing makes clusters happy
+> 				} //bProcessDecoy ( false if multi-fast_relax )
+> 			} //SMK ifelse abinitio_protocol.get_name() == "ClassicAbinitio"
+> 		} // if ( bRelax_ )
+2042,2046c2121,2125
+< 	Protocol& ,
+< 	core::scoring::ScoreFunctionOP ,
+< 	jobdist::PlainSilentFileJobDistributor ,
+< 	int& ,
+< 	jobdist::BasicJobOP&
+---
+> 		Protocol& ,
+> 		core::scoring::ScoreFunctionOP ,
+> 		jobdist::PlainSilentFileJobDistributor ,
+> 		int& ,
+> 		jobdist::BasicJobOP&
+2062c2141
+< 		!option[ OptionKeys::abinitio::fastrelax ]() ) return;
+---
+> 			!option[ OptionKeys::abinitio::fastrelax ]() ) return;

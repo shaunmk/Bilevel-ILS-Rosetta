@@ -1,0 +1,19 @@
+26a27,28
+> #include <MGFUtils/MGFGlobal.hh> //SMK
+> 
+61a64
+> 	using namespace MGFUtils; //SMK
+63,64c66,70
+< 	for ( Size i=0; ( i<nmoves_ ) && cond_( pose ); ++i ) {
+< 		mover_->apply( pose );
+---
+> 	Size i; //SMK moved this outside for diagnostic purposes
+> 
+> 	//SMK added new condition for bilevel
+> 	for ( i=0; ( i<nmoves_ ) && cond_( pose ) && !MGFGlobal::terminate_bilevel_by_trial_count; ++i ) {
+> 		mover_->apply( pose ); //SMK this is TrialMover in ClassicAbinitio
+65a72,75
+> //	std::cout 	<< "SMK: WhileMover terminated; move number (0-indexed) is " << i
+> //				<< ", nmoves was " <<nmoves_
+> //				<<" terminate bit was " << MGFGlobal::terminate_bilevel_by_trial_count
+> //				<< std::endl;

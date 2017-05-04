@@ -1,0 +1,8 @@
+768,770c768,770
+< 			// out	<< ScoreType( it - total_energies().begin() + 1 ) << ' '
+< 			//  		<< F(15,3,*it);
+< 			out << F( 15,3, *it );
+---
+> 			 out	<< ScoreType( it - total_energies().begin() + 1 ) << '\t'//SMK
+> 			  		<< F(15,3,*it) << std::endl;
+> //			out << F( 15,3, *it );//SMK enabled above instead

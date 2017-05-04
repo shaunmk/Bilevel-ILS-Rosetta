@@ -1,0 +1,33 @@
+# CHANGE ME
+-database /path/to/rosetta_database
+
+# Fix random number generator seed for test run
+-run:constant_seed
+-jran 123
+
+# Mandatory options. DO NOT alter nstruct value!
+-nstruct 1
+-frags:annotate
+-abinitio:skip_convergence_check
+-out:pdb
+
+# This is usually set to 100, but here we set it to 10 for a short test run
+-abinitio:increase_cycles 10
+
+# new options.
+# Generate data used to compute local and global measures (Kandathil et al., 2016)
+# This data tends to be quite large.
+-abinitio:SMK_generate_trajectory false
+
+# Experimental; use variable-length fragment insertion operators for the Perturbation steps? 
+-abinitio:SMK_var_Linsert_length false
+
+# When this option is set to true, the bilevel protocol is used. When false, the ILS protocol is used.
+-abinitio:SMK_SS_dependent_LF true
+
+# Regular inputs: fasta file, fragments and PSIPRED prediction (the latter is mandatory and is generated when making fragments)
+-in:file:fasta vf_1acf_.fasta
+-in:file:frag3 1acf_.200.3mers
+-in:file:frag9 1acf_.200.9mers
+-psipred_ss2 1acf_.psipred_ss2
+

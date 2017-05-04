@@ -1,0 +1,4 @@
+80a81,83
+> 		//		std::cout << "SMK: BBTorsionSRFD::apply is changing residue " << seqpos << std::endl;
+> 		// SMK MAKE SURE the vars accessed in pose have been set, otherwise nonsensical results are guaranteed.
+> 		pose.update_pdb_sources(pose.pdbid_with_chain_proposed, pose.pdb_start_resnum_proposed, seqpos,seqpos);//seems inefficient...

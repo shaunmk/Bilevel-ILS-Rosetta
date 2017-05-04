@@ -1,0 +1,6 @@
+314a315
+> public:
+316c317
+< 	FragDataList frag_list_;
+---
+> 	FragDataList frag_list_; //SMK made this public

@@ -1,0 +1,57 @@
+248c248
+< 		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+---
+> //		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+274c274
+< 		this->assess_solutions_and_output(); //SMK
+---
+> //		this->assess_solutions_and_output(); //SMK
+312c312
+< 		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+---
+> //		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+335c335
+< 		this->assess_solutions_and_output(); //SMK
+---
+> //		this->assess_solutions_and_output(); //SMK
+422c422
+< 		this->assess_solutions_and_output();
+---
+> //		this->assess_solutions_and_output(); //SMK
+505c505
+< 		this->assess_solutions_and_output();
+---
+> //		this->assess_solutions_and_output(); //SMK
+540c540
+< 		this->assess_solutions_and_output();
+---
+> //		this->assess_solutions_and_output(); //SMK
+660c660
+< 		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+---
+> //		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+679c679
+< 		this->assess_solutions_and_output();
+---
+> //		this->assess_solutions_and_output(); //SMK
+803c803
+< 		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+---
+> //		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+822c822
+< 		this->assess_solutions_and_output();
+---
+> //		this->assess_solutions_and_output(); //SMK
+863c863
+< 		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+---
+> //		assess_frac_retained_from_previous_reduction(required_size, index);// SMK
+880c880
+< 		this->assess_solutions_and_output(); //SMK
+---
+> //		this->assess_solutions_and_output(); //SMK
+1018a1019,1022
+> 
+> 	// This assumes that the solutions retained in the prior reduction step will have indices in the range [1, size_after_last_reduction].
+> 	// this is only true because the retained solutions from the last step are at the top of the list when the current reduction step begins.
+> 	// If e.g. a randomisation step is added before the actual reduction is done, this function won't work as intended.

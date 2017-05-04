@@ -1,0 +1,50 @@
+21a22
+> #include <core/fragment/FragData.hh> //SMK
+41a43
+> #include <basic/options/keys/frags.OptionKeys.gen.hh>//SMK
+232c234
+< 	bApplyEndBias_ = true;
+---
+> 	bApplyEndBias_ = false; //SMK DO NOT WANT DO NOT WANT
+470a473,474
+> 	using namespace basic::options; //SMK
+> 
+480c484,503
+< 	if ( !check_ss() ) return apply_fragment( *frames[ frame_num ], frag_num, *movemap_, pose );
+---
+> 	if ( !check_ss() ) {
+> 		// SMK BEGIN
+> 		// SMK I think check_ss is true by default...the cmdline option is F by default(?), and this is negated to get check_ss_.
+> 		// see ClassicFragmentMover::set_defaults()
+> 		if(option[OptionKeys::frags::annotate].user()) {
+> 			// these vars should be set before calling apply_fragment() and Pose::print_pdb_source_vectors().
+> 			FragDataOP fragdataLOL = (*frames[ frame_num ]).frag_list_.at(frag_num); //UGHHHH
+> 			std::string pdbid = fragdataLOL->pdbid();
+> 			std::string pdbchain(1, fragdataLOL->chain() );
+> 
+> 			//set these in pose as "proposed" values. update the vectors in pose only when the residues are actually modified (respect the movemap).
+> 			pose.pdb_start_resnum_proposed = fragdataLOL->pdbpos();
+> 			pose.pdbid_with_chain_proposed = pdbid + pdbchain;
+> 
+> 			//			std::cout << "SMK: ClassicFragmentMover::apply_frames: frag is from " << pdbid + pdbchain << ", starting at position " << pose.pdb_start_resnum_proposed;
+> 			//			std::cout << std::endl;
+> 		}
+> 		//SMK END
+> 		return apply_fragment( *frames[ frame_num ], frag_num, *movemap_, pose );
+> 	}
+502a526,540
+> 		//SMK BEGIN
+> 		if(option[OptionKeys::frags::annotate].user()) {
+> 			// these vars should be set before calling apply_fragment() and Pose::print_pdb_source_vectors().
+> 			FragDataOP fragdataLOL = (*frames[ frame_num ]).frag_list_.at(frag_num); //UGHHHH
+> 			std::string pdbid = fragdataLOL->pdbid();
+> 			std::string pdbchain(1, fragdataLOL->chain() );
+> 
+> 			//set these in pose as "proposed" values. update the vectors in pose only when the residues are actually modified (respect the movemap).
+> 			pose.pdb_start_resnum_proposed = fragdataLOL->pdbpos();
+> 			pose.pdbid_with_chain_proposed = pdbid + pdbchain;
+> 
+> 			//			std::cout << "SMK: ClassicFragmentMover::apply_frames: frag is from " << pdbid + pdbchain << ", starting at position " << pose.pdb_start_resnum_proposed;
+> 			//			std::cout << std::endl;
+> 		}
+> 		//SMK END

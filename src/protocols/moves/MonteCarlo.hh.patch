@@ -1,0 +1,452 @@
+25a26
+> #include <protocols/moves/SMKarchive.hh>
+33a35
+> #include <utility/string_util.hh> //SMK
+36a39,42
+> //custom headers
+> #include <MGFUtils/MGFGlobal.hh>
+> #include <MGFUtils/MGFArchive.hh>
+> 
+43a50,52
+> #include <fstream> //SMK
+> #include <iostream>
+> #include <vector>
+83a93,99
+> 	//SMK
+> 	enum accept_type {
+> 		accept_lowE=0,
+> 		accept_mc=1,
+> 		reject_E=2,
+> 		reject_invalid_move=3
+> 	} ;
+193a210,216
+> 	/// SMK NEW NEW NEW
+> 	/// boltzmann using only score delta and temperature for L
+> 	bool
+> 	boltzmann(
+> 		core::Real score_delta,
+> 		core::Real const _temperature
+> 	);
+194a218,223
+> 	/// boltzmann using only score delta and temperature for F
+> 	bool
+> 	boltzmannF(
+> 		core::Real score_delta,
+> 		core::Real const _temperature
+> 	);
+337a367,370
+> 	//SMK set this once, near the start of ClassicAbinitio
+> 	//	copy(clone) the stage4_scorefxn already defined there. This is done internally
+> 	void
+> 	stg4_score_function( ScoreFunction const & scorefxn );
+351a385
+> 	ScoreFunction const & stg4_score_function() const; //SMK
+530a565,568
+> 	/// SMK overload is modded to read in pose
+> 	void
+> 	autotemp_reject(Pose& pose);
+> 
+538a577,600
+>     
+>     //SMK obsolete
+>     //unfold a randomly selected loop stretch and force-accept the move
+>     void
+>     unfold_loop(Pose& pose);
+>     
+>     //SMK
+>     //output the current structure, torsion state, score to different traj files.
+>     void
+>     output_trajectory_point(Pose& pose);
+> 
+>     //SMK
+>     void
+>     output_trajectory_point_stage(Pose& pose, Size stage, std::string tag="");
+> 
+>     //SMK
+>     //update and/or output stuff when it has to be done every accpeted move
+>     void
+>     OutputNonTrajStuff( Pose& pose );
+> 
+>     //SMK
+>     void
+> 	OutputNonTrajStuff_stage(Pose& pose, Size stage, std::string tag="");
+> 
+544a607,831
+>     ///SMK
+> 
+>     void set_stage( core::Size s ) {
+>         this->stage_ = s;
+>         MGFUtils::MGFGlobal::set_stage(int(s)); // SMK so that the archives can see stage info
+>     }
+>     
+>     core::Size check_stage(  ) {
+>         return stage_;
+>     }
+>     
+>     Pose& get_LMin() {
+>     	return *LMin;
+>     }
+> 
+>     // sync IsLeader state across all pose objects in mc, everytime the value is changed.
+>     // func will need to be modified if you want to use multiple saved pose objects.
+>     void setPoseIsLeader( Pose& pose, bool const setting);
+> 
+>     //filter the move for L based on move size and length of loop with id loopid
+>     // true:move is allowed for L, false: move rejected for L
+>     bool make_L_filter (Size movesize, int loopid);
+>     bool make_L_filter (Pose& pose, Size conditionNumber);
+> 
+>     // Show some counters. use only once, at end of run!
+>     void show_stats_SMK();
+> 
+>     //get loop assignments from PSIPRED file and generate a list in LoopInfo
+>     void get_loops_from_psipred( Pose const & pose );
+>     
+>     //use dssp3state files instead of psipred files
+>     utility::vector1< char > read_SS_from_dssp3state();
+> 
+>     //set things to zero
+>     void initialise_SMK_counters();
+> 
+>     //print Lcounters
+>     void print_Lcounters(std::ostream & Lcounter_file);
+> 
+>     //reset Lcounters to 0
+>     void reset_Lcounters();
+> 
+>     //Get native structure and save into 'native' Pose object
+>     void get_native_pose();
+> 
+>     //Wrapper function to get rmsd. Use for LMins.
+>     Real get_rmsd_to_native(Pose const & pose);
+> 
+>     //Test that the rmsd values are same as what we get from Lovell's C code
+>     void test_rmsd_calc(Pose const & native_pose);
+> 
+>     //Wrapper function to get score. Use for LMins.
+>     Real get_native_score();
+> 
+>     //use to see (unweighted) energy components from LMin
+>     void show_all_energies(Pose const& pose, std::ostream& os);
+> 
+>     //use to set phi,psi and omega for the selected residue to the values from last_accepted_pose_
+>     void set_torsions_to_last_accepted( Pose& pose, Size residue );
+> 
+>     //find the inserted residues and set changed_res vector. Also set movesize if in Leader
+>     void set_changed_res(Pose& pose);
+> 
+>     //check the insert for loops, get all info
+>     // how many loops are involved, which ones are spanned, which ones incompletely
+>     // return the "condition number" as per notes 19/08/2014
+>     Size analyse_insert_for_loops (Pose& pose);
+> 
+>     //which loop is the current residue in?
+>     //return type is int because of -1 default.
+>     int which_loop (Size residue);
+> 
+>     // SMK deprecated functions for SMKarchive
+> //    void add_archive_condition(SMKarchiveConditionOP condition){
+> //    	mc_archive.push_back_condition(condition);
+> //    }
+> 
+> //    void initialise_archive_conditions();
+> 
+>     //for vectors with no duplicates allowed
+>     template <typename T, typename A>
+>     void nodup_push_to_vector (std::vector <T,A> &vec, T elem) {
+> 
+>     	bool flag = true;
+>     	for (unsigned i=0; i<vec.size(); ++i) {
+>     		if (elem == vec.at(i)) {
+>     			flag=false;
+>     			break;
+>     		}
+>     	}
+>     	if (flag) vec.push_back(elem);
+> 
+>     }
+> 
+>     //print contents of a vector
+>     template <typename T, typename A>
+>     void print_vector(std::vector <T,A> vec) {
+>     	for (typename std::vector<T,A>::iterator it = vec.begin() ; it != vec.end(); ++it)
+>     	{
+>     		std::cout<< (*it) <<" ";
+>     	}
+>     	std::cout<< std::endl;
+>     }
+>     ////////////////Simulated annealing///
+> 
+>     // set initial parameters for SA: start temp, final temp, decay function
+>     //CALL IN ClassicAbinitio, at the beginning of the do_stageX_cycles functions
+>     void initialise_SA(Size MaxAttemptsInCurrentStage);
+> 
+>     //reset SA temp to initial value. call at beginning of each stage
+>     void reset_SA_temp();
+> 
+>     //update SA temp depending on attempt number for current stage
+>     void update_SA_temp( Size attempt_number );
+> 
+>     //use to reset these variables. Use in ClassicAbinitio at the start of a stage to reset to 0.
+>     void set_AttemptsInCurrentStage( Size countL, Size countF );
+> 
+>     // SMK this should be a string; we don't use it for any arithmetic
+> //	void setArchiveStructnum(Size archiveStructnum) {
+> //		archive_structnum = archiveStructnum;
+> //	}
+> 
+>     //////////other
+> 
+> 	void reset_NumOfPDBs() {
+> 		this->NumOfPDBs = 0;
+> 	}
+> 
+> 	void reset_stg4_samplingfreqs(){
+> 		stage4_samplingfreqs.clear();
+> 		stage4_samplingfreqs.assign(NumOfResidues,0);
+> 	}
+> 
+> 	void print_stg4_samplingfreqs (std::string tag = "" );
+> 
+> 	void setTrajInterval(Size trajInterval) {
+> 		TrajInterval = trajInterval;
+> 	}
+> 
+> 	void setGenerate_traj (bool const gen){
+> 		bGenerateTraj = gen;
+> 	}
+> 
+> 	void set_SS_dependent_LF(bool const setting){
+> 		this->bSS_dependent_LF = setting;
+> 	}
+> 
+> 	//for MGF archives
+> 	void resetAllArchiveReductorCounts();
+> 	void writeAllArchiveReductorCounts(std::string filename = "stats.txt");
+> 	void outputAllArchiveStructs (std::string info="");
+> 
+> 	void prune_all_archives_to_size (int nstruct);
+> 
+> 	void change_all_archive_scorefxns (std::string stage_tag);
+> 	void add_to_all_archives(Pose& pose);
+> 
+> 	void create_archives_from_cmdline();
+> 
+> 	void set_archive_tag(const std::string& archiveTag) {
+> 		archive_tag = archiveTag;
+> 	}
+> 
+> 	void setAbinitioIncreaseCycles(Real ic) {
+> 		abinitio_increase_cycles = ic;
+> //		std::cout << "SMK_TRACE: MonteCarlo: increase_cycles set to " << ic << std::endl;
+> 	}
+> 
+> 	// call this when an LMin is reached
+> 	void pushFcurrentHillclimbAccepts(){
+> 		Fhillclimb_accepts.push_back(FcurrentHillclimbAccepts);
+> 		FcurrentHillclimbAccepts = 0;
+> 	}
+> 
+> 	//call at end of Bilevel/ILS stages
+> 	void writeHillclimbCounts() {
+> 		Size const stg = check_stage();
+> 		std::string filename;
+> 		filename = "F_hillclimb_counts_stg" + utility::to_string(stg) + ".txt";
+> 
+> 		std::ofstream hillclimb_lengths_file (filename.c_str(), std::ios::out);
+> 
+> 		for (std::vector < Size > ::iterator it = Fhillclimb_accepts.begin(); it != Fhillclimb_accepts.end(); ++it) {
+> 			hillclimb_lengths_file << (*it) << std::endl;
+> 		}
+> 
+> 		hillclimb_lengths_file.close();
+> 		Fhillclimb_accepts.clear();
+> 		// FcurrentHillclimbAccepts is zeroed everytime it is pushed to the vector.
+> 	}
+> 
+> 	void write_Lattempts_CurrentStage();
+> 
+> 	bool MakeProportionData() const {
+> 		return bMakeProportionData;
+> 	}
+> 
+> 	void setMakeProportionData(bool makeProportionData) {
+> 		bMakeProportionData = makeProportionData;
+> 	}
+> 
+> 	bool TrajInLMins() const {
+> 		return bTrajInLMins;
+> 	}
+> 
+> 	void setTrajInLMins(bool trajInLMins) {
+> 		bTrajInLMins = trajInLMins;
+> 	}
+> 
+> 	// TODO PROPORTION DATA ON_THE_FLY because it is a lot of storage.
+> 	// Doing this will increase memory requirements, since all the feature vectors have to be read into memory.
+> 
+> //	// read the feature vector files per residue and per fraglib (9mers and 3mers).
+> //	void read_feature_vectors_from_files( std::string const & feature_path );
+> //
+> //	// call each time a move is accepted. if a residue has reached proportion=1.0, do not evaluate it again in the current stage
+> //	void update_proportions(Size const stage);
+> //
+> //	// have to reset things at the beginning of each stage.
+> //	// how to handle multi-stg4? call this at the beginning of each stg4.
+> //	void reset_proportions();
+> 
+> 
+>     /// END SMK
+582c869,870
+< 
+---
+>     
+>     
+587a876,1018
+> 
+>     Size NumAccepts, TrajInterval; ////SMK How many accepts? What is the num of accepts between traj points?
+>     Size NumOfPDBs; ////SMK
+>     Size TrialNumber;//SMK Master trial counter.
+> 
+> public:
+> 
+>     // SMK should we generate trajectory data?
+>     bool bGenerateTraj;
+> 
+>     // SMK if generating trajectory data for global measures, should this be in terms of LMins? If false, the traj will be in terms of all accepted moves.
+>     bool bTrajInLMins;
+> 
+>     // SMK output torsion data for calculating proportion of torsion space used?
+>     bool bMakeProportionData;
+> 
+>     // SMK should secondary structure-dependent moves be used in the Leader and Follower?
+>     // if true, you get the bilevel protocol. If false, you get the ILS protocol.
+>     //	This lets us determine how much improvement is due to SS-dependent moves
+>     // 	as opposed to simply the effect of perturbation + hillclimbing + Simulated Annealing.
+>     //	The value is set in ClassicAbinitio according to the corresponding command line option.
+>     bool bSS_dependent_LF;
+> 
+>     // SMK an archive of good solutions; this is now deprecated in favour of MGFArchive objects
+> //    SMKarchive mc_archive;
+> 
+>     //SMK ADVANCED archives
+>     std::vector < MGFUtils::MGFArchive > Archives;
+>     std::string archive_tag;
+> 
+>     //////// for stage4 :
+>     // SMK this is deprecated. now use the numbering from the archive in question, since this is variable.
+>     // SMK convert all functions using this to use tag_ in MGFArchive
+>     //which structure in the archive is being processed?  used to make filenames etc.
+> //    Size archive_structnum;
+> 
+>     utility::vector1 < Size > stage4_samplingfreqs;
+> 
+> 
+>     /// @brief SMK stage4 scoring function, for outputting score values of Lmins.
+>     ScoreFunctionOP stg4_score_function_;
+> 
+>     Size stage_;//SMK
+>     Real abinitio_increase_cycles; //SMK
+>     
+>     //SMK array to hold the sampling frequency for each position; incremented if the phi or psi changed after a move.
+>     //Allocated and deallocated in constructor and destructor, respectively
+>     //dims will be [numofresidues][4]. second dim refers to stages.
+>     Size ** samplingfrequencies;
+>     
+>     //residue count
+>     Size NumOfResidues;
+> 
+>     //SMK used to determine which loop is currently being sampled
+> //    int CurrentLoopID_a, CurrentLoopID_b, CurrentLoopID_c;
+>     Size CurrentLoopID;
+> //    bool start_found, end_found;
+>     Size n_loopres_in_insert;
+> 
+>     Size ** LoopInfo; //stores start and end positions for loops, read from PSIPRED file
+>     Size **LoopSamplingFreqs; //stores loop sampling frequencies, size depends on n_loops
+>     Size n_loops;// SMK number of loops, inferred from PSIPRED file, excludes terminal loops
+> //    Size n_unfolds;//SMK obsolete; number of unfold steps
+> 
+>     Real score;//SMK for current score
+> 
+>     std::vector <Size> LoopLengths;
+>     std::vector <Size> loopstarts_found, loopends_found;
+>     std::vector <Size> loops_spanned;
+>     std::vector <int> loops_involved; //int not Size since this can have -1
+>     
+>     //which residues in the proposed move are in loops?
+>     //make a vector of length=changed_res.size(), full of falsehoods
+>     // turn elements to true if the correspoding secstruct_smk elem is 'L'
+>     std::vector<bool> loop_res_in_insert;
+> 
+>     //SMK each char represents the three-state secondary structure as read from the PSIPRED file
+>     utility::vector1< char > secstruct_smk;
+> 
+>     //SMK a list of the changed residue numbers
+>     std::vector< Size > changed_res;
+> 
+>     Size n_L_reject; //number of L moves rejected between an LMin and an L accept
+>     //SMK vector of the values of n_L_reject before resetting to zero
+>     //values need to be Reals for using mean/stdev functions.
+>     utility::vector1< Real > L_reject_vec;
+> 
+>     //SMK is this the leader (true) or the follower (false) in the Bilevel scheme?
+>     //bool IsLeader; //SMK moved to Pose because many parts of the application need to see this
+> 
+>     //SMK is a native structure present?
+>     bool native_present;
+> 
+>     //SMK last-energy-minimum and native str info.
+>     PoseOP LMin, native;
+>     Real LMin_score, LMin_temperature;
+> 
+>     //SMK counters for BiLevel-approved moves
+>     // Lattempts and Fattempts include invalid moves.
+>     Size Laccepts_lowerE, Laccepts_MC, Lrejects_Energy, Lrejects_InvalidMove, Lattempts;
+>     Size Faccepts_lowerE, Faccepts_MC, Frejects_Energy, Frejects_InvalidMove, Fattempts;
+>     Size Func_evals;
+> 
+>     // SMK length of each hillclimb (in terms of accepted moves) in current stage.
+>     // Push FcurrentHillclimbAccepts to the vector when an LMin is reached; write teh vector out and clear at the end of each stage.
+>     Size FcurrentHillclimbAccepts;
+>     std::vector < Size > Fhillclimb_accepts;
+>     // for valid L attempts, use Lattempts_CurrentStage below.
+> 
+>     //SMK set based on pose.move_start and pose.move_end
+>     Size movesize;
+> 
+>     //SMK vector of vectors for counts of different movesize in the current stage
+>     // there will be n * 4 values where n is the max movesize(9)
+>     // 4 for the different categories of move (accepts_lowerE, accepts_MC, rejects_E, rejects_invalid_move).
+>     // second-level indices will be 0 to 3, corresponding to this order.
+>     std::vector < std::vector < Size > > Lcounters;
+> 
+>     /////////SMK Simulated Annealing parameters
+> 
+>     //Decay parameter. This is multiplied to temperature after every accepted move
+>     Real alpha;
+> 
+>     //Initial and final Temp values.
+>     Real InitialTemp;
+> 	Real FinalTemp;
+> 
+> 	//SMK Total number of bilevel- or ILS-approved attempts in the current stage
+>     Real CurrentStageLength;
+> 
+>     //SMK Bilevel-approved attempts in the two levels in the current stage
+>     Size Lattempts_CurrentStage, Fattempts_CurrentStage;
+> 
+>     /////////// TODO SMK stuff for calculating proportion of unique torsion triplets used per residue, on the fly
+>     // Want to do this because torsion data output consumes a lot of storage.
+>     // Seems that we'll need to read in lists of all the unique triplets for each position; this will take up memory during the run.
+> //    utility::vector1 <double> proportions;	// the actual proportion values
+> //    std::list <Size> residues_to_check; // remove residue indices once they reach 1.0 in proportion value. Numbers will begin from 1.
+> //    bool proportion_all_residues_reached_unity; // in the rare case that all residues record a 1.0, don't evaluate anything in the current stage
+> //
+> 
+> 
+> 
+594c1025
+< } // rosetta
+---
+> } // protocols

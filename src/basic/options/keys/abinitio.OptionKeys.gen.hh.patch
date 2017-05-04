@@ -1,0 +1,9 @@
+53a54,61
+> namespace abinitio { extern BooleanOptionKey const SMK_generate_trajectory; }
+> namespace abinitio { extern BooleanOptionKey const SMK_make_proportion_data; }
+> namespace abinitio { extern BooleanOptionKey const SMK_trajectory_in_Lmins; }
+> namespace abinitio { extern BooleanOptionKey const SMK_var_Linsert_length; }
+> namespace abinitio { extern BooleanOptionKey const SMK_SS_dependent_LF; }
+> namespace abinitio { extern IntegerOptionKey const SMK_traj_interval; }
+> namespace abinitio { extern RealOptionKey const SMK_initial_temp; }
+> namespace abinitio { extern RealOptionKey const SMK_final_temp; }

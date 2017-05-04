@@ -1,0 +1,14 @@
+-database /mnt/fls01-home01/mqbpjsk3/rosetta3.4/rosetta_database
+-nstruct 1
+-frags:annotate
+-abinitio:skip_convergence_check
+-out:pdb
+-abinitio:increase_cycles 100
+-abinitio:SMK_generate_trajectory false
+-abinitio:SMK_var_Linsert_length false
+-abinitio:SMK_SS_dependent_LF false
+-in:file:fasta /mnt/fls01-home01/mqbpjsk3/new_fraglibs/1acf_nohoms/vf_1acf_.fasta
+-in:file:frag3 /mnt/fls01-home01/mqbpjsk3/new_fraglibs/1acf_nohoms/1acf_.200.3mers
+-in:file:frag9 /mnt/fls01-home01/mqbpjsk3/new_fraglibs/1acf_nohoms/1acf_.200.9mers
+-psipred_ss2 /mnt/fls01-home01/mqbpjsk3/new_fraglibs/1acf_nohoms/1acf_.psipred_ss2
+-mute all

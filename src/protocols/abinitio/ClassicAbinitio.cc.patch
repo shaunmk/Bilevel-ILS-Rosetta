@@ -1,0 +1,802 @@
+28a29
+> 
+45a47,50
+> #include <MGFUtils/MGFArchive.hh> //SMK
+> #include <MGFUtils/MGFGlobal.hh> //SMK
+> #include <core/import_pose/import_pose.hh> //SMK
+> 
+66a72
+> #include <basic/options/keys/in.OptionKeys.gen.hh> //SMK
+70a77
+> #include <iostream> //SMK, for endl etc
+78a86
+> #include <protocols/moves/PyMolMover.hh> //SMK
+89a98
+> using namespace basic::options::OptionKeys::in; //SMK
+95c104
+< */
+---
+>  */
+122a132,140
+> 	//SMK also need a PSIPRED file and native if available
+> 	option.add_relevant( OptionKeys::in::file::psipred_ss2 ); //SMK
+> 	option.add_relevant( OptionKeys::in::file::native ); //SMK
+> 	option.add_relevant( OptionKeys::abinitio::SMK_generate_trajectory ); //SMK
+> 	option.add_relevant( OptionKeys::abinitio::SMK_var_Linsert_length ); //SMK
+> 	option.add_relevant( OptionKeys::abinitio::SMK_SS_dependent_LF ); //SMK
+> 	option.add_relevant( OptionKeys::abinitio::SMK_traj_interval ); //SMK
+> 	option.add_relevant( OptionKeys::abinitio::SMK_initial_temp ); //SMK
+> 	option.add_relevant( OptionKeys::abinitio::SMK_final_temp ); //SMK
+138,141c156,159
+< 	simple_moves::FragmentMoverOP brute_move_small,
+< 	simple_moves::FragmentMoverOP brute_move_large,
+< 	simple_moves::FragmentMoverOP smooth_move_small,
+< 	int  /*dummy otherwise the two constructors are ambiguous */
+---
+> 		simple_moves::FragmentMoverOP brute_move_small,
+> 		simple_moves::FragmentMoverOP brute_move_large,
+> 		simple_moves::FragmentMoverOP smooth_move_small,
+> 		int  /*dummy otherwise the two constructors are ambiguous */
+143,145c161,163
+< 	brute_move_small_( brute_move_small ),
+< 	brute_move_large_( brute_move_large ),
+< 	smooth_move_small_( smooth_move_small )
+---
+> 					brute_move_small_( brute_move_small ),
+> 					brute_move_large_( brute_move_large ),
+> 					smooth_move_small_( smooth_move_small )
+149,150c167,168
+< 		//	std::cerr << "ClassicAbinitio::constructor has stubbed out...(fatal) see code file";
+< 		//	runtime_assert( 0 ); //---> needs more implementation to use this constructor: e.g. read out movemap from FragmentMover...
+---
+> 	//	std::cerr << "ClassicAbinitio::constructor has stubbed out...(fatal) see code file";
+> 	//	runtime_assert( 0 ); //---> needs more implementation to use this constructor: e.g. read out movemap from FragmentMover...
+152c170
+< 		//		set_defaults( pose ); in constructor virtual functions are not called
+---
+> 	//		set_defaults( pose ); in constructor virtual functions are not called
+160,162c178,180
+< 	core::fragment::FragSetCOP fragset_small,
+< 	core::fragment::FragSetCOP fragset_large,
+< 	core::kinematics::MoveMapCOP movemap
+---
+> 		core::fragment::FragSetCOP fragset_small,
+> 		core::fragment::FragSetCOP fragset_large,
+> 		core::kinematics::MoveMapCOP movemap
+164c182
+< 	movemap_( movemap )
+---
+> 					movemap_( movemap )
+168a187,188
+> 
+> 	// SMK will need to change this OP type to accommodate the changes below
+169a190
+> 
+185a207
+> 		/// SMK these are the movers we'll need to change I think
+190c212
+< 
+---
+> 	///SMK the end bias is now disabled by default. What a silly thing
+202a225,226
+> 
+> 
+210,211c234,235
+< 	//utility::pointer::ReferenceCount(),
+< 	Parent( src )
+---
+> 					//utility::pointer::ReferenceCount(),
+> 					Parent( src )
+279a304,315
+> 	////SMK BEGIN
+> 
+> 	//send a structure to a PyMOL listener
+> 
+> 	//generate using the pose object, maintain a history in PyMOL and update after at least 0.01 sec
+> 	//moves::AddPyMolObserver( pose, true, 0.01 );
+> 
+> 	//generate using the pose object, don't maintain a history in PyMOL and update after each *attempted* move
+> 	//VERY SLOW to fold but looks cooler in PyMOL. Great for presentations.
+> 	//moves::AddPyMolObserver( pose, false, 0.0 );
+> 
+> 	//SMK END
+283a320,353
+> 	//SMK BEGIN
+> 	pose.set_frag_length(9); //SMK
+> 
+> 	// SMK process new cmdline options
+> 
+> 	// SMK tell mc to generate trajectory data
+> 	if (option[ basic::options::OptionKeys::abinitio::SMK_generate_trajectory ]){
+> 		mc().setGenerate_traj(true);
+> 		mc().setTrajInLMins( option[ basic::options::OptionKeys::abinitio::SMK_trajectory_in_Lmins ] );
+> 		mc().setMakeProportionData( option[ basic::options::OptionKeys::abinitio::SMK_make_proportion_data ] );
+> 		mc().setTrajInterval(option[ basic::options::OptionKeys::abinitio::SMK_traj_interval ]);
+> 	}
+> 
+> 	// Bilevel optimiser uses variable-length inserts in high-level moves. This can be turned off.
+> 	if (!option[ basic::options::OptionKeys::abinitio::SMK_var_Linsert_length ]){
+> 		pose.set_var_length_Lmoves(false);
+> 		tr.Warning <<"SMK_var_Linsert_length is false." << std::endl;
+> 	}
+> 
+> 	// Use secondary structure-dependent moves? This option defaults to true.
+> 	if (option[ basic::options::OptionKeys::abinitio::SMK_SS_dependent_LF ]){
+> 		mc().set_SS_dependent_LF(true);
+> 	} else {
+> 		mc().set_SS_dependent_LF(false);
+> 		tr.Warning <<"SMK_SS_dependent_LF is false." << std::endl;
+> 	}
+> 
+> 	mc().setAbinitioIncreaseCycles(option[ basic::options::OptionKeys::abinitio::increase_cycles ]);
+> 
+> 	mc().InitialTemp = option[ basic::options::OptionKeys::abinitio::SMK_initial_temp ];
+> 	mc().FinalTemp = option[ basic::options::OptionKeys::abinitio::SMK_final_temp ];
+> 
+> 	//SMK END
+> 
+306c376,378
+<  			if ( tr.Info.visible() ) current_scorefxn().show( tr, pose );
+---
+> 			//SMK debug: print the score before recover_low
+> 			tr << "stage1: score before recover_low: " << pose.energies().total_energy() << std::endl;
+> 			if ( tr.Info.visible() ) current_scorefxn().show( tr, pose );
+307a380
+> 			tr << "stage1: score after recover_low: " << pose.energies().total_energy() << std::endl;
+323a397,402
+> 		// SMK BEGIN
+> 		std::ofstream MyPdbInfo;
+> 		MyPdbInfo.open("FragmentInfo1.txt", std::ios::out);
+> 		pose.print_pdb_source_vectors(MyPdbInfo,false);
+> 		MyPdbInfo.close();
+> 		//SMK END
+342a422,424
+> 		//SMK BEGIN
+> 		//		mc().change_all_archive_scorefxns("STAGE2");
+> 		//SMK END
+344,348c426,430
+< 			if ( close_chbrk_ ){
+< 				Real const setting( 0.25 );
+< 				set_score_weight( scoring::linear_chainbreak, setting, STAGE_2 );
+< 				tr.Info <<  " Chain_break score assigned " << std::endl;
+< 			}
+---
+> 		if ( close_chbrk_ ){
+> 			Real const setting( 0.25 );
+> 			set_score_weight( scoring::linear_chainbreak, setting, STAGE_2 );
+> 			tr.Info <<  " Chain_break score assigned " << std::endl;
+> 		}
+360a443
+> 			tr << "stage2: score before recover_low: " << pose.energies().total_energy() << std::endl; //SMK
+361a445
+> 			tr << "stage2: score after recover_low: " << pose.energies().total_energy() << std::endl; //SMK
+379a464,479
+> 
+> 		//SMK BEGIN
+> 		std::ofstream MyPdbInfo;
+> 		MyPdbInfo.open("FragmentInfo2.txt", std::ios::out);
+> 		pose.print_pdb_source_vectors(MyPdbInfo,false);
+> 		MyPdbInfo.close();
+> 		//		mc().mc_archive.dump_scored_archive_pdbs(current_scorefxn(), "_stage2");
+> 
+> 		//SMK pruning is done whenever scorefxn is changed.
+> //		mc().prune_all_archives_to_size(desired_archive_size);
+> //		mc().outputAllArchiveStructs("_stage2");
+> 		mc().write_Lattempts_CurrentStage(); // goes to stats.txt by default
+> //		mc().writeHillclimbCounts(); // this is a vector, written to a separate file
+> 		mc().writeAllArchiveReductorCounts(); // goes to stats.txt by default
+> 		//SMK END
+> 
+389a490,491
+> 		// SMK mc().change_all_archive_scorefxns() is called in prepare_loop_in_stage3()
+> 
+399c501
+< 		set_last_move_status( moves::FAIL_RETRY );
+---
+> 			set_last_move_status( moves::FAIL_RETRY );
+405a508
+> 		tr << "stage3: score before recover_low: " << pose.energies().total_energy() << std::endl; //SMK
+407c510
+< 
+---
+> 		tr << "stage3: score after recover_low: " << pose.energies().total_energy() << " " << mc().lowest_score() << std::endl; //SMK
+421a525,541
+> 		//SMK BEGIN
+> 		std::ofstream MyPdbInfo;
+> 		MyPdbInfo.open("FragmentInfo3.txt", std::ios::out);
+> 		pose.print_pdb_source_vectors(MyPdbInfo,false);
+> 		MyPdbInfo.close();
+> 		//		mc().mc_archive.dump_scored_archive_pdbs(current_scorefxn(), "_stage3");
+> 
+> 		//SMK pruning is done whenever scorefxn is changed.
+> 		// SMK Need to manually reduce archive before stage4
+> 		//	this is because otherwise, reductor will be called in scorefxn change, which is called AFTER current pose has been assigned
+> 		mc().prune_all_archives_to_size(desired_archive_size);
+> 		mc().write_Lattempts_CurrentStage(); // goes to stats.txt by default
+> //		mc().writeHillclimbCounts(); // this is a vector, written to a separate file
+> 		mc().writeAllArchiveReductorCounts(); // goes to stats.txt by default
+> 		mc().outputAllArchiveStructs("_stage3");
+> 
+> 		//SMK END
+423a544,547
+> 	mc().show_stats_SMK(); //SMK
+> 
+> //	if (option[ basic::options::OptionKeys::abinitio::SMK_generate_trajectory ])
+> //		utility_exit_with_message ("Not an error lol; Normal exit after stage3 due to trajectory data being output.");
+428a553,555
+> 
+> 	pose.set_frag_length(3); //SMK
+> 
+431,434c558,562
+< 		// part 4 ------------------------------------------
+< 		tr.Info <<  "\n===================================================================\n";
+< 		tr.Info <<  "   Stage 4                                                         \n";
+< 		tr.Info <<  "   Folding with score3 for " << stage4_cycles() <<std::endl;
+---
+> 		// SMK BEGIN
+> 		// SMK  we should run stage4 on each structure in the archive.
+> 		// SMK  montecarlo should know which structure in the archive is being processed;
+> 		//			the trajectory info should be generated separately for each.
+> 		// REDUCTORS MUST BE CALLED TO PRUNE ARCHIVES TO DESIRED SIZE BEFORE THIS STEP
+436,437c564,565
+< 		PROF_START( basic::STAGE4 );
+< 		clock_t starttime = clock();
+---
+> 		// set evaluators to use stage4 scorefxn.
+> 		//		mc().change_all_archive_scorefxns("STAGE4");
+439,442c567,568
+< 		if ( !prepare_stage4( pose ) ) {
+< 			set_last_move_status( moves::FAIL_RETRY );
+< 			return;
+< 		}
+---
+> 		//SMK since we're doing multiple rounds of stage 4, reduce the number of structures coming out.
+> 		mc().setTrajInterval(Size(100 * option[basic::options::OptionKeys::abinitio::increase_cycles ]));
+444,447d569
+< 		//score-fxn may be changed in do_stage4_cycles...
+< 		// confusing if shown here already... if ( tr.Info.visible() ) current_scorefxn().show( tr, pose);
+< 		success = do_stage4_cycles( pose );
+< 		recover_low( pose, STAGE_4  );
+449,452c571,572
+< 		if ( tr.Info.visible() ) current_scorefxn().show( tr, pose);
+< 		mc().show_counters();
+< 		total_trials_+=mc().total_trials();
+< 		mc().reset_counters();
+---
+> 		// 	for each archive type,
+> 		for (std::vector< MGFUtils::MGFArchive >::iterator it = mc().Archives.begin(); it != mc().Archives.end(); ++it){
+454,459c574,687
+< 		clock_t endtime = clock();
+< 		PROF_STOP( basic::STAGE4 );
+< 		if ( option[ basic::options::OptionKeys::run::profile ] ) prof_show();
+< 		if ( option[ basic::options::OptionKeys::abinitio::debug ]() ) {
+< 			output_debug_structure( pose, "stage4" );
+< 			tr << "Timeperstep: " << (double(endtime) - starttime )/( CLOCKS_PER_SEC ) << std::endl;
+---
+> 			//each Archive type has a tag.
+> 			std::string const archive_tag = it->get_tag();
+> 
+> 			tr.Info << "SMK: in " << archive_tag << " archive, calling loop over structures." << std::endl;
+> 
+> 			if(this->desired_archive_size != it->get_current_size()){
+> 				std::stringstream err;
+> 				err << "SMK: Archive " << archive_tag << " size is " << it->get_current_size() << ", but desired size is " << this->desired_archive_size << std::endl;
+> 				err << "\tThis will cause serious problems with archive-based stage4 setup. This is a fatal error." << std::endl;
+> 				utility_exit_with_message(err.str());
+> 			}
+> 
+> 			// 		for each structure in that archive,
+> 			for (int i = 0; i < (it->get_current_size()); ++i){
+> 
+> 				std::stringstream full_tag;
+> 				std::string full_tag_string;
+> 				full_tag << archive_tag << '_' << i+1;
+> 				full_tag_string = full_tag.str();
+> 				mc().set_archive_tag(full_tag_string);
+> 
+> 				// reset counters, set any relevant parameters
+> 
+> //				mc().setArchiveStructnum(ar_index+1);
+> 				mc().reset_NumOfPDBs();
+> 				mc().reset_stg4_samplingfreqs();
+> 
+> 				//set pose
+> 
+> //				pose = mc().mc_archive.structures_.at(ar_index);
+> 				pose = *(it->get_member_pose(i));
+> 
+> 				//do everything else
+> 
+> 				tr.Info << "SMK PROCESSING ARCHIVE STRUCTURE " << full_tag_string << " FOR STAGE 4" << std::endl;
+> 				//			run stage4, output structure.
+> 				// SMK END
+> 
+> 				// part 4 ------------------------------------------
+> 				tr.Info <<  "\n===================================================================\n";
+> 				tr.Info <<  "   Stage 4                                                         \n";
+> 				tr.Info <<  "   Folding with score3 for " << stage4_cycles() <<std::endl;
+> 
+> 				PROF_START( basic::STAGE4 );
+> 				clock_t starttime = clock();
+> 
+> 				if ( !prepare_stage4( pose ) ) { //SMK this calls mc().reset() which sets last_accepted_pose and lowest_score_pose to pose
+> 					set_last_move_status( moves::FAIL_RETRY );
+> 					return;
+> 				}
+> 
+> 				//score-fxn may be changed in do_stage4_cycles...
+> 				// confusing if shown here already... if ( tr.Info.visible() ) current_scorefxn().show( tr, pose);
+> 				success = do_stage4_cycles( pose );
+> 				recover_low( pose, STAGE_4  );
+> 
+> 				if ( tr.Info.visible() ) current_scorefxn().show( tr, pose);
+> 				mc().show_counters();
+> 				total_trials_+=mc().total_trials();
+> 				mc().reset_counters();
+> 
+> 				clock_t endtime = clock();
+> 				PROF_STOP( basic::STAGE4 );
+> 				if ( option[ basic::options::OptionKeys::run::profile ] ) prof_show();
+> 				if ( option[ basic::options::OptionKeys::abinitio::debug ]() ) {
+> 					output_debug_structure( pose, "stage4" );
+> 					tr << "Timeperstep: " << (double(endtime) - starttime )/( CLOCKS_PER_SEC ) << std::endl;
+> 				}
+> 
+> 				///SMK BEGIN //yes, here
+> 
+> 				// don't forget to add the finished structure to the archive !!!
+> 
+> 				it->add_pose_in_position(pose, i);
+> 
+> 				//these need to know archive type etc.
+> 
+> 				output_stuff_after_stg4(pose, full_tag_string);
+> 				if (option[ basic::options::OptionKeys::abinitio::SMK_generate_trajectory ]){
+> 					mc().print_stg4_samplingfreqs(full_tag_string);
+> 				}
+> 				//reset samplingfreqs is done at start of this loop
+> 			} // for i
+> 
+> 		} // for it
+> 
+> 		mc().outputAllArchiveStructs("_stage4");
+> 
+> //		LowEnergyCondition LowE;
+> //		SMKarchive::ArchiveIterator min_energy_pose_iterator = std::min_element(mc().mc_archive.structures_.begin(), mc().mc_archive.structures_.end(), LowE.EC);
+> 		tr.Info << "SMK End of stage 4..." << std::endl;
+> 		//		mc().mc_archive.print_archive_info(tr);
+> 		//		mc().mc_archive.dump_scored_archive_pdbs(current_scorefxn(), "_stage4");
+> //		tr << "Lowest energy = " << min_energy_pose_iterator->energies().total_energy() << std::endl;
+> //		tr << "Using this to proceed with the rest of abinitio." << std::endl;
+> 
+> 		// SMK for now, let pose be the last pose in the last archive evaluated.
+> //		pose = *min_energy_pose_iterator;
+> 
+> 		if(option[ basic::options::OptionKeys::abinitio::SMK_generate_trajectory]){
+> 			std::ofstream rmsds;
+> 			rmsds.open("LMin_RMSDs.txt", std::ios::app);
+> 
+> 			rmsds << mc().get_rmsd_to_native( pose ) << ' '
+> 					<< mc().stg4_score_function()(pose) << ' '
+> 					<< mc().score << ' '
+> 					<< mc().get_native_score() << ' '
+> 					<< mc().check_stage() << " 1";
+> 			rmsds << std::endl;
+> 
+> 			rmsds.close();
+> 
+> 			// if a native file is supplied, score it and output to another file
+> 			//std::string native_fname( option[ OptionKeys::in::file::native ]().name() );
+460a689
+> 		//SMK END
+465a695,696
+> 
+> 
+555,557c786,788
+< 	simple_moves::FragmentMoverOP brute_move_small,
+< 	simple_moves::FragmentMoverOP brute_move_large,
+< 	simple_moves::FragmentMoverOP smooth_move_small
+---
+> 		simple_moves::FragmentMoverOP brute_move_small,
+> 		simple_moves::FragmentMoverOP brute_move_large,
+> 		simple_moves::FragmentMoverOP smooth_move_small
+582a814,816
+> 	//SMK set my stg4_scorefxn in mc. The func uses the clone() method of ScoreFunction.
+> 	mc().stg4_score_function(*score_stage4_);
+> 
+590c824
+< 	*/
+---
+> 	 */
+617,618c851,852
+< 	pose::Pose const & pose,
+< 	scoring::ScoreFunction const & scorefxn
+---
+> 		pose::Pose const & pose,
+> 		scoring::ScoreFunction const & scorefxn
+632a867,871
+> 	//SMK I set the cycle counts for stages 2 and 3 to very high values
+> 	// so that they terminate after a given number of function evaluations
+> 	// this is controlled by the boolean variable terminate_bilevel_by_trial_count
+> 	// This is a workaround since we don't know the true number of perturbations or func evals in advance.
+> 	// see MonteCarlo::boltzmann.
+634,636c873,876
+< 	stage2_cycles_ = static_cast< int > (2000 * increase_cycles);
+< 	stage3_cycles_ = static_cast< int > (2000 * increase_cycles);
+< 	stage4_cycles_ = static_cast< int > (4000 * increase_cycles);
+---
+> 	stage2_cycles_ = static_cast< int > (200000 * increase_cycles);//SMK changed from 2000
+> 	stage3_cycles_ = static_cast< int > (200000 * increase_cycles);//SMK changed from 2000
+> 	stage4_cycles_ = static_cast< int > (400 * increase_cycles); 	// SMK with Bilevel IC 100 and more than one structure being retained,
+> 																	//this leads to more funcevals than Rosetta (IC10)
+638a879,885
+> 	//SMK print cycle counts to make sure there is no overflow. check again in stage3!
+> 	tr << "SMK: Stage1 cycles set to " << stage1_cycles_ << std::endl;
+> 	tr << "SMK: Stage2 cycles set to " << stage2_cycles_ << std::endl;
+> 	tr << "SMK: Stage3 cycles set to " << stage3_cycles_ << std::endl;
+> 	tr << "SMK: Stage4 cycles set to " << stage4_cycles_ << std::endl;
+> 	tr << "SMK: Stage5 cycles set to " << stage5_cycles_ << std::endl;
+> 
+652c899
+< 
+---
+> 	using namespace basic::options::OptionKeys::abinitio;
+737a985
+> 		tr.Warning << "SMK: WARNING: run:test_cycles option given; this is not something I planned for." << std::endl;
+740a989,993
+> 	//SMK BEGIN
+> 	this->desired_archive_size = std::max(10,int(option[ OptionKeys::abinitio::increase_cycles ] / 10.0));
+> 	tr.Info << "SMK: increase_cycles is " << option[ OptionKeys::abinitio::increase_cycles ] << ", will output " << desired_archive_size << " structures." << std::endl;
+> 
+> 	//SMK END
+760c1013
+< 					eit = option[ OptionKeys::abinitio::recover_low_in_stages ]().end(); it!=eit; ++it ) {
+---
+> 				eit = option[ OptionKeys::abinitio::recover_low_in_stages ]().end(); it!=eit; ++it ) {
+837a1091,1097
+> 	mc().set_stage(1);//SMK
+> 	pose.Pose_IsLeader=false;//SMK
+> 	MGFUtils::MGFGlobal::terminate_bilevel_by_trial_count = false; //SMK
+> 	//    mc().reset_Lcounters();//SMK
+> 
+> 	//mc().initialise_SA( stage1_cycles() );//SMK
+> 
+844a1105
+> 
+846a1108,1114
+> 
+> 		// SMK BEGIN for making figure showing effect of fragment insertion
+> //		std::stringstream fname; //SMK
+> //		fname << "stg1_itr" << j << ".pdb";
+> //		pose.dump_pdb(fname.str(),"lol");
+> 		//SMK END
+> 
+849a1118,1120
+> 			//			output_current_temperature( );//SMK
+> 			mc().get_LMin() = pose;
+> 			//			mc().print_Lcounters();//SMK
+855a1127,1129
+> //	output_current_temperature( );//SMK
+> 	mc().get_LMin() = pose;
+> 	//	mc().print_Lcounters();//SMK
+859a1134,1143
+> 	// SMK BEGIN
+> 	mc().set_stage(2);
+> 	mc().initialise_SA(stage2_cycles());
+> 	mc().set_AttemptsInCurrentStage(0,0);
+> 	mc().reset_Lcounters();
+> 	mc().resetAllArchiveReductorCounts();
+> 	pose.Pose_IsLeader=true;
+> 	MGFUtils::MGFGlobal::terminate_bilevel_by_trial_count = false;
+> 	std::cout<< "SMK: In stage 2, finished SMK initialisations" << std::endl;
+> 	// SMK END
+870a1155,1169
+> 	//SMK BEGIN
+> //	output_current_temperature( );//SMK
+> 
+> 	if(option[ basic::options::OptionKeys::abinitio::SMK_generate_trajectory]){
+> 		tr.Info << "SIMULATED ANNEAL: stage2 finished; output Lcounters and reset." << std::endl;
+> 
+> 		std::string filename ("Lcounters_stg2_range4.txt");
+> 		std::ofstream outfile;
+> 
+> 		outfile.open(filename.c_str(), std::ios::out);
+> 		mc().print_Lcounters(outfile);
+> 		outfile.close();
+> 	}
+> //	mc().writeAllArchiveReductorCounts(); // goes to stats.txt by default
+> 	//SMK END
+887c1186
+< */
+---
+>  */
+896d1194
+< 
+898,900c1196,1218
+< 		nloop1 = 2;
+< 		nloop2 = 5;
+< 	}
+---
+> 			nloop1 = 2;
+> 			nloop2 = 5;
+> 		}
+> 
+> 	//SMK BEGIN
+> 
+> 	mc().set_stage(3);
+> 	//SMK stage3_cycles is multiplied by nloop1 and nloop2 to get the actual number of attempts over the whole stage
+> 	// This is meant to function as an "extreme upper-bound" on the number of trials
+> 	Size const total_attempts_stg3 =  stage3_cycles() * nloop1 * nloop2 ;
+> 	tr << "SMK: Extreme upper-bound on number of attempts in stg3 calculated as " << total_attempts_stg3 << std::endl;
+> 	tr << "SMK: this number should never be reached." << std::endl;
+> 	Size const attempts_each_stg3cycle = 2000 * option[basic::options::OptionKeys::abinitio::increase_cycles];
+> 	tr << "SMK: Valid attempts for each subcycle of stg3 calculated as " << attempts_each_stg3cycle << std::endl;
+> 	mc().initialise_SA(total_attempts_stg3); // this number is not actually used internally... Rather, increase_cycles is multiplied by a constant. ugly.
+> 	mc().set_AttemptsInCurrentStage(0,0);
+> 	pose.Pose_IsLeader = true;
+> 	mc().reset_Lcounters();
+> 	mc().resetAllArchiveReductorCounts();
+> 	MGFUtils::MGFGlobal::terminate_bilevel_by_trial_count = false;
+> 
+> 	//SMK END
+> 
+912c1230
+< 			tr.Debug << "Loop: " << lct1 << "   " << lct2 << std::endl;
+---
+> 			tr.Info << "Loop: " << lct1 << "   " << lct2 << std::endl;
+917c1235
+< 			                                       false /*fullatom */, true /*fold tree */ )) {
+---
+> 					false /*fullatom */, true /*fold tree */ )) {
+919,920c1237,1239
+< 
+< 				tr.Debug << "  Score stage3 loop iteration " << lct1 << " " << lct2 << std::endl;
+---
+> 				// SMK add the check for terminate_bilevel_by_trial_count in these loops?
+> 				// SMK I think this is not necessary!
+> 				tr.Info << "  Score stage3 loop iteration " << lct1 << " " << lct2 << std::endl;
+924c1243
+< 					moves::WhileMover( stage3_trials, stage3_cycles(), convergence_checker ).apply( pose );
+---
+> 					moves::WhileMover( stage3_trials, attempts_each_stg3cycle, convergence_checker ).apply( pose ); //SMK
+926c1245
+< 					moves::RepeatMover( stage3_mover( pose, lct1, lct2, trials ), stage3_cycles() ).apply( pose );
+---
+> 					moves::RepeatMover( stage3_mover( pose, lct1, lct2, trials ), attempts_each_stg3cycle ).apply( pose ); //SMK
+930c1249
+< 			                                                                 recover_low( pose, STAGE_3b );
+---
+> 				recover_low( pose, STAGE_3b );
+938a1258,1274
+> 
+> 	//SMK BEGIN
+> //	output_current_temperature( );//SMK
+> 
+> 	if(option[ basic::options::OptionKeys::abinitio::SMK_generate_trajectory]){
+> 		tr.Info << "SIMULATED ANNEAL: stage3 finished; output Lcounters and reset." << std::endl;
+> 
+> 		std::string filename("Lcounters_stg3_range4.txt");
+> 		std::ofstream outfile;
+> 
+> 		outfile.open(filename.c_str(), std::ios::out);
+> 		mc().print_Lcounters(outfile);
+> 		outfile.close();
+> 	}
+> 	pose.dump_pdb("end_of_stg3.pdb", "testSMK"); // I want to compare pre- and post-stage4 structures.
+> //	mc().writeAllArchiveReductorCounts(); // goes to stats.txt by default
+> 	// SMK END
+942,943c1278
+< 
+< 	// interlaced score2 / score 5 loops
+---
+> // interlaced score2 / score 5 loops
+956c1291
+< */
+---
+>  */
+958a1294,1300
+> 	mc().set_stage(4);//SMK
+> 	pose.Pose_IsLeader=false;//SMK really the setting here doesn't matter;if stage ==4 it will just use regular boltzmann().
+> 	MGFUtils::MGFGlobal::terminate_bilevel_by_trial_count = false; //SMK
+> 
+> 	mc().set_AttemptsInCurrentStage(0,0);//SMK
+> 	mc().set_temperature(2.0);//SMK for skipping stg4 in bilevel
+> 	//    mc().reset_Lcounters();//SMK
+985c1327
+< 			//			structure_store().push_back( mc_->lowest_score_pose() );
+---
+> 		//			structure_store().push_back( mc_->lowest_score_pose() );
+986a1329,1330
+> //	output_current_temperature( );//SMK
+> 	//	mc().print_Lcounters();//SMK
+990a1335,1338
+> 	mc().set_stage(5);//SMK
+> 	mc().initialise_SA(stage5_cycles());//SMK
+> 	mc().set_AttemptsInCurrentStage(0,0);//SMK
+> 	pose.Pose_IsLeader = true;//SMK
+1063c1411,1415
+< 	mc_->set_temperature( temperature ); // temperature might have changed due to autotemp..
+---
+> 
+> 	// SMK BEGIN
+> 	//SMK turning this off since it interferes with SA temp reset in stages 2 and 3:
+> 	//mc_->set_temperature( temperature ); // temperature might have changed due to autotemp..
+> //	tr << "SMK : changing scorefxn to enum member number " << stage << ", calling mc->reset(). Pruning and rescoring archives."<< std::endl;
+1064a1417,1465
+> 
+> 	//SMK: update LMin for any change in scorefxn.
+> 	update_LMin( pose );
+> 
+> 	//SMK rescore archive for any change in scorefxn.
+> //	mc().mc_archive.rescore_archive( mc().score_function() ); //SMK
+> 
+> 	//smk Repeat for MGFArchives
+> 	//	Prune archives BEFORE changing scorefxns.
+> 	//	The (current) purpose of the archives is to store the 'desired_archive_size' best solutions under the *current* evaluation criteria.
+> 	//	So, when the scorefxn changes, we should be operating on a minimal set, since otherwise, the choice of best solutions could change.
+> 	mc().prune_all_archives_to_size(desired_archive_size);
+> 
+> 	std::string stage_string;
+> 
+> 	switch(stage){
+> 	case STAGE_1:
+> 		stage_string = "STAGE1";
+> 		break;
+> 	case STAGE_2:
+> 		stage_string = "STAGE2";
+> 		break;
+> 	case STAGE_3a:
+> 		stage_string = "STAGE3_A";
+> 		break;
+> 	case STAGE_3b:
+> 		stage_string = "STAGE3_B";
+> 		break;
+> 	case STAGE_4:
+> 		stage_string = "STAGE4";
+> 		break;
+> 	case STAGE_5:
+> 		tr.Warning << "SMK WARNING: stage5 reached; Archives not really ready for this." << std::endl;
+> 		stage_string = "STAGE4";
+> 		break;
+> 	default:
+> 		utility_exit_with_message("ERROR: unknown scorefxn specified for MGF archives. PANIC!");
+> 		break;
+> 	}
+> 
+> 	//this will re-evaluate all the solutions with the new scorefxn.
+> 	mc().change_all_archive_scorefxns(stage_string);
+> 
+> 	// and finally rescore the native and output value. Note that this goes to cout and so is not subject to muting
+> 	std::cout << "SMK: " << stage_string;
+> 	if (mc().native_present)
+> 		std::cout << ", native score = " << mc().get_native_score();
+> 	std::cout << std::endl;
+> 	//SMK END
+1094d1494
+< 
+1138c1538
+< 		// interlace score2/score5
+---
+> 	// interlace score2/score5
+1140,1155c1540,1541
+< 		Real chbrk_weight_stage_3a = 0;
+< 		Real chbrk_weight_stage_3b = 0;
+< 
+< 		if ( numeric::mod( (int)iteration, 2 ) == 0 || iteration > 7 ) {
+< 			Real progress( iteration );
+< 			chbrk_weight_stage_3a = 0.25 * progress;
+< 			tr.Debug << "select score_stage3a..." << std::endl;
+< 			recover_low( pose, STAGE_3a );
+< 			replace_scorefxn( pose, STAGE_3a, 1.0* iteration/total );
+< 		} else {
+< 			Real progress( iteration );
+< 			chbrk_weight_stage_3b = 0.05 * progress;
+< 			tr.Debug << "select score_stage3b..." << std::endl;
+< 			recover_low( pose, STAGE_3b );
+< 			replace_scorefxn( pose, STAGE_3b, 1.0* iteration/total );
+< 		}
+---
+> 	Real chbrk_weight_stage_3a = 0;
+> 	Real chbrk_weight_stage_3b = 0;
+1157c1543,1557
+< 		if ( close_chbrk_ ){
+---
+> 	if ( numeric::mod( (int)iteration, 2 ) == 0 || iteration > 7 ) {
+> 		Real progress( iteration );
+> 		chbrk_weight_stage_3a = 0.25 * progress;
+> 		tr.Debug << "select score_stage3a..." << std::endl;
+> 		recover_low( pose, STAGE_3a );
+> 		replace_scorefxn( pose, STAGE_3a, 1.0* iteration/total );
+> //		tr.Info << "Loop in stage3 : changing scorefxn to stage3_a; pruning archive." << std::endl;
+> 	} else {
+> 		Real progress( iteration );
+> 		chbrk_weight_stage_3b = 0.05 * progress;
+> 		tr.Debug << "select score_stage3b..." << std::endl;
+> 		recover_low( pose, STAGE_3b );
+> 		replace_scorefxn( pose, STAGE_3b, 1.0* iteration/total );
+> //		tr.Info << "Loop in stage3 : changing scorefxn to stage3_b; pruning archive." << std::endl;
+> 	}
+1159,1160c1559
+< 			set_score_weight( scoring::linear_chainbreak, chbrk_weight_stage_3a , STAGE_3a );
+< 			set_score_weight( scoring::linear_chainbreak, chbrk_weight_stage_3b , STAGE_3b );
+---
+> 	if ( close_chbrk_ ){
+1162c1561,1562
+< 		}
+---
+> 		set_score_weight( scoring::linear_chainbreak, chbrk_weight_stage_3a , STAGE_3a );
+> 		set_score_weight( scoring::linear_chainbreak, chbrk_weight_stage_3b , STAGE_3b );
+1163a1564
+> 	}
+1165c1566
+< 		return true;
+---
+> 	return true;
+1173,1174c1574,1575
+< 			set_current_weight( scoring::linear_chainbreak, chbrk_weight_stage_4 );
+< 			}
+---
+> 		set_current_weight( scoring::linear_chainbreak, chbrk_weight_stage_4 );
+> 	}
+1205a1607,1664
+> //SMK
+> void
+> ClassicAbinitio::update_LMin(Pose& pose) {
+> 	mc().get_LMin() = pose;
+> 	mc().LMin_score=mc().score_function()( mc().get_LMin() );
+> 	mc().LMin_temperature = mc().temperature();
+> 
+> }
+> 
+> void
+> ClassicAbinitio::output_current_temperature() {
+> 	//SMK open a file for SA temperature data
+> 	std::ofstream temperature_file("SA_temperature_info.txt", std::ios::app);
+> 	temperature_file << "Stage " << mc().stage_ << " final temperature: " << mc().temperature() <<std::endl;
+> 	temperature_file.close();
+> }
+> 
+> void ClassicAbinitio::output_stuff_after_stg4(Pose& pose, std::string tag) {
+> 
+> 	std::stringstream filename;
+> //	std::stringstream pdbfilename;
+> 	std::stringstream scorefname;
+> 	std::stringstream fraginfo_fname;
+> 
+> 	if (option[ basic::options::OptionKeys::abinitio::SMK_generate_trajectory ]){
+> 		//	pdbfilename << "ArchiveStruct" << tag << ".pdb";
+> 		//	pose.dump_scored_pdb(pdbfilename.str(), current_scorefxn(), "WowSoBilevel");
+> 		//	tr << "Outputting archive structure " << pdbfilename.str() << std::endl;
+> 
+> 
+> 		// output the torsions and score for the end structure to the .traj files thus:
+> 		std::ofstream Mytraj;
+> 		filename << "Archive_struct"<< tag << "_stage4_torsions_all.traj";
+> 		Mytraj.open(filename.str().c_str(), std::ios::app);
+> 
+> 		Mytraj << mc().check_stage()<< "  ";
+> 		for(Size pp=1;pp<=pose.n_residue();pp++) {
+> 			Mytraj<<pose.phi(pp)<<"  "<<pose.psi(pp)<<"  "<<pose.omega(pp)<<"  ";
+> 		}
+> 		Mytraj<<std::endl;
+> 		Mytraj.close();
+> 
+> 		std::ofstream Myscoretraj;
+> 		scorefname << "Archive_struct" << tag <<"_stage4_score_all.traj";
+> 		Myscoretraj.open(scorefname.str().c_str(), std::ios::app);
+> 		Myscoretraj << pose.energies().total_energy() << "\t" << mc().check_stage() << "\t" << pose.Pose_IsLeader << std::endl;
+> 		Myscoretraj.close();
+> 	}
+> 
+> 	std::ofstream MyPdbInfo;
+> 	fraginfo_fname << "FragmentInfo_4_Archive_struct" << tag  << ".txt";
+> 	MyPdbInfo.open(fraginfo_fname.str().c_str(), std::ios::out);
+> 	pose.print_pdb_source_vectors(MyPdbInfo,false);
+> 	MyPdbInfo.close();
+> }
+> 
+> //SMK
+> 
+1207a1667,1668
+> 
+> 

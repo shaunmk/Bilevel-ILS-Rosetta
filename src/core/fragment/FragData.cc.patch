@@ -1,0 +1,69 @@
+36c36,37
+< 
+---
+> //SMK for RNG
+> #include <numeric/random/random.hh>
+40a42,44
+> //SMK RNG for variable fragment length mod
+> static numeric::random::RandomGenerator frag_RG(23432); // <- Magic number, do not change it.
+> 
+84a89
+> 	pose.window_start = start; //SMK
+85a91,122
+> 	Size first(start); 	//SMK
+> 	Size last(end);		//SMK
+> 
+> 	//SMK BEGIN
+> 
+> 	if (pose.AllowVariableInsertLength && pose.Pose_IsLeader) {
+> 
+> 		Size const fraglength = last - first + 1;
+> 
+> 		//SMK generate pseudorandom fragment length in [1,fraglength]
+> 		Size const move_size = frag_RG.random_range(1, fraglength);
+> 
+> 		// e.g. for fraglength = 9, movesize = 4, the move can be displaced 0, 1, 2, 3, or 4 residues from 'start'.
+> 		Size const max_displacement = fraglength - move_size;
+> 
+> 		// displace insertion within original 9mer window
+> 		// goes from 0 to max_displacement:
+> 		Size const displacement = frag_RG.random_range(0, max_displacement);
+> 
+> 		first = start + displacement;
+> 		last = first + (move_size - 1);
+> 
+> //		std::cout << "----------------------------\n";
+> //		std::cout << "SMK L: original window is " << start << " to " << end << " (frag length " << fraglength << ").\n";
+> //		std::cout << "SMK L: chosen insert length is " << move_size << " (residue " << first << " to " << last << ").\n";
+> //		std::cout << "SMK L: displacement is " << displacement << ", max_displacement is " << max_displacement << std::endl;
+> 	}
+> 	pose.move_start = first;
+> 	pose.move_end = last;
+> 
+> 	//SMK END
+> 
+87a125,130
+> 
+> 		//SMK skip non-required parts of the insertion
+> 		if (pose.Pose_IsLeader) {
+> 			if (pos < first || pos > last) continue;
+> 		}
+> 
+260a304,320
+> }
+> 
+> Size AnnotatedFragData::apply( kinematics::MoveMap const& mm, pose::Pose& pose, Size start, Size end ) const{ // continous application to length residues
+> 	return Parent::apply( mm, pose, start, end);
+> }
+> Size AnnotatedFragData::apply( kinematics::MoveMap const& mm, pose::Pose& pose, Frame const& frame) const{ //application to any set of residues specified by the Fr
+> 	std::cout << "SMK: WARNING: called AnnotatedFragData::apply2. BAD!" << std::endl;
+> 	return Parent::apply( mm, pose, frame);
+> }
+> 
+> //without movemap --- just apply the full fragment
+> Size AnnotatedFragData::apply( pose::Pose& pose, Frame const& frame ) const{  //application to any set of residues specified by the Fr
+> 	std::cout << "SMK: WARNING: called AnnotatedFragData::apply3. BAD!" << std::endl;
+> 	return Parent::apply( pose, frame);
+> }
+> Size AnnotatedFragData::apply( pose::Pose& pose, Size start, Size end ) const{ // continous application to length residues
+> 	return Parent::apply(pose, start, end);

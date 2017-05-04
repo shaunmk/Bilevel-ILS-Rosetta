@@ -1,0 +1,28 @@
+52a53
+> #include <fstream> //SMK
+202a204,208
+> 	//SMK
+> 	moves::MonteCarloOP smk_mc(){
+> 		return mc_;
+> 	}
+> 
+382a389,402
+> 	//SMK
+> 
+> 	//Update LMin and associated vars in montecarlo object
+> 	//Use when scorefxn changes.
+> 	void update_LMin(Pose& pose);
+> 
+> 	//Output MC temperature (for simulated anneal) plus some other info
+> 	//use at end of each stage to monitor the end temperature since we're not using the "proper" number of attempts.
+> 	void output_current_temperature();
+> 
+> 	void output_stuff_after_stg4(Pose& pose, std::string tag="");
+> 
+> 	//SMK
+> 
+399c419,420
+< 
+---
+> 	//SMK
+> 	int desired_archive_size;

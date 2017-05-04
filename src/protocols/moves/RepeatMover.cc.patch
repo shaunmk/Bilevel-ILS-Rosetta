@@ -1,0 +1,14 @@
+15a16
+> #include <MGFUtils/MGFGlobal.hh> //SMK
+48c49,52
+< 	for ( int i=1; i<=nmoves_; ++i ) {
+---
+> 	using namespace MGFUtils; //SMK
+> 	int i; //SMK moved this outside for diagnostic purposes
+> 	//SMK added new condition for bilevel
+> 	for ( i=1; i<=nmoves_ && !MGFGlobal::terminate_bilevel_by_trial_count; ++i ) {
+51a56,59
+> //	std::cout 	<< "SMK: RepeatMover terminated; move number (1-indexed) was " << i
+> //				<< ", nmoves was " << nmoves_
+> //				<< ", terminate bit was " << MGFGlobal::terminate_bilevel_by_trial_count
+> //				<< std::endl;

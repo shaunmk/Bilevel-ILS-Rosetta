@@ -1,0 +1,16 @@
+561a562,569
+> namespace abinitio { BooleanOptionKey const SMK_generate_trajectory( "abinitio:SMK_generate_trajectory" );  }
+> namespace abinitio { BooleanOptionKey const SMK_make_proportion_data( "abinitio:SMK_make_proportion_data" );  }
+> namespace abinitio { BooleanOptionKey const SMK_trajectory_in_Lmins( "abinitio:SMK_trajectory_in_Lmins" );  }
+> namespace abinitio { BooleanOptionKey const SMK_var_Linsert_length( "abinitio:SMK_var_Linsert_length" );  }
+> namespace abinitio { BooleanOptionKey const SMK_SS_dependent_LF( "abinitio:SMK_SS_dependent_LF" );  }
+> namespace abinitio { IntegerOptionKey const SMK_traj_interval( "abinitio:SMK_traj_interval" );  }
+> namespace abinitio { RealOptionKey const SMK_initial_temp( "abinitio:SMK_initial_temp" );  }
+> namespace abinitio { RealOptionKey const SMK_final_temp( "abinitio:SMK_final_temp" );  }
+598,603d605
+< namespace abinitio { BooleanOptionKey const optimize_cutpoints_using_kic( "abinitio:optimize_cutpoints_using_kic" );  }
+< namespace abinitio { IntegerOptionKey const optimize_cutpoints_margin( "abinitio:optimize_cutpoints_margin" );  }
+< namespace abinitio { FileOptionKey const HD_EX_Info( "abinitio:HD_EX_Info" );  }
+< namespace abinitio { RealOptionKey const HD_penalty( "abinitio:HD_penalty" );  }
+< namespace abinitio { RealOptionKey const HD_fa_penalty( "abinitio:HD_fa_penalty" );  }
+< namespace abinitio { FileOptionKey const sheet_edge_pred( "abinitio:sheet_edge_pred" );  }

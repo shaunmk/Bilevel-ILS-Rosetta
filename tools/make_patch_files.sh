@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [ ! -s filelist.txt ]; then
+	echo "did not find filelist.txt!"
+	exit 1
+fi
+
+BILEVEL_SRC_DIR=${HOME}/rosetta3.4/rosetta_new_sampler
+SRC_DIR_TO_PATCH=${HOME}/rosetta_source
+
+> filelist_to_copy_not_patch.txt
+> list_of_patches.txt
+
+# paths in filelist.txt are relative to the src directory.
+for fpath in $(cat filelist.txt)
+do
+	dir=$(dirname $fpath) # this will not have a trailing '/'
+	base=$(basename $fpath) # this has the relevant file extension.
+
+	mkdir -p $dir	
+
+	# some files are newly added. if the file is not present in the destination dir, just write the name to a separate file.
+	# make a local copy of the file.
+	# the script that actually patches Rosetta will handle these differently.
+	if [ ! -s ${SRC_DIR_TO_PATCH}/${fpath} ]; then
+	    echo $fpath >> filelist_to_copy_not_patch.txt
+	    cp ${BILEVEL_SRC_DIR}/$fpath ${dir}/${base}
+	else
+	    # we will append .patch to the names of the files.
+	    diff ${SRC_DIR_TO_PATCH}/$fpath ${BILEVEL_SRC_DIR}/$fpath > ${fpath}.patch
+	    echo ${fpath}.patch >> list_of_patches.txt
+	fi
+done

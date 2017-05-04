@@ -1,0 +1,20 @@
+Stage 2, valid L moves: 123
+Stage 2:
+_energy_std reduced 113 times
+Stage 3, valid L moves: 1255
+Stage 3:
+_energy_std reduced 1255 times
+L accepts/rejects (valid moves):348 / 1029
+Invalid L moves:				453
+L scored lower:         		182
+L thermal accepts:      		166
+L total attempts (actual/calc):	1831/1830
+L rejects before autotemp (mean/stdev): 2.93678 / 5.68842
+----------------------------------------
+F accepts/rejects (valid moves):11401 / 200767
+Invalid F moves:				6638
+F scored lower:         		11401
+F thermal accepts:      		0
+F total attempts (actual/calc):	218806/218806
+----------------------------------------
+TrialNumber (SMK):      220716

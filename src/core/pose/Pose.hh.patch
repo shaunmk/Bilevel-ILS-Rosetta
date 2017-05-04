@@ -1,0 +1,51 @@
+47,48c47,48
+< #include <core/conformation/Residue.fwd.hh>
+< #include <core/conformation/Conformation.fwd.hh>
+---
+> #include <core/conformation/Residue.hh> // SMK changed from fwd.hh
+> #include <core/conformation/Conformation.hh> // SMK changed from fwd.hh
+1466a1467,1486
+> 	//SMK BEGIN
+> public:
+> 
+> 	//use this in ClassicAbinitio
+>     void set_frag_length ( core::Size m ) {
+>     	fraglength = m;
+>     }
+> 
+>     void set_var_length_Lmoves (bool const setting) {
+>     	AllowVariableInsertLength = setting;
+>     }
+>     // methods for new data members
+> 
+>     void
+> 	update_pdb_sources (std::string pdb_with_chain, int pdbresidue, Size move_start, Size move_end);
+> 
+>     void
+> 	print_pdb_source_vectors(std::ostream & stream, bool const horizontal=true);
+> 
+> 	//SMK END
+1528a1549,1571
+> 	//SMK BEGIN
+> public:
+> 	bool Pose_IsLeader;
+> 
+> 	//should variable-length inserts be used in high-level moves (Bilevel Leader)?
+> 	bool AllowVariableInsertLength;
+> 
+> 	Size window_start, move_start, move_end;
+> 
+> 	// set in ClassicAbinitio, formerly in MonteCarlo
+> 	Size fraglength;
+> 
+> 	// proposed values
+> 	std::string pdbid_with_chain_proposed;
+> 	int pdb_start_resnum_proposed;
+> 
+> 	// vector containing the source pdb id and chain id (concatenated) for performed fragment insertions
+> 	utility::vector1 <std::string> pdb_sources;
+> 
+> 	// vector with residue numbers in source pdbs, corresponds to pdb_sources. pdb numbering can be negative!
+> 	utility::vector1 <int> pdb_source_res;
+> 
+> 	//SMK END

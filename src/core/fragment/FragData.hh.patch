@@ -1,0 +1,59 @@
+48c48
+< typedef	utility::vector1 < SingleResidueFragDataOP > SRFD_List;
+---
+> 	typedef	utility::vector1 < SingleResidueFragDataOP > SRFD_List;
+94,96c94,96
+<  	char secstruct( Size const pos) const {
+<  		return data_[pos]->secstruct();
+<  	}
+---
+> 	char secstruct( Size const pos) const {
+> 		return data_[pos]->secstruct();
+> 	}
+147c147
+<   /// @brief Returns the chain if it has been specified, '_' otherwise.
+---
+> 	/// @brief Returns the chain if it has been specified, '_' otherwise.
+170c170
+< typedef FragData Parent;
+---
+> 	typedef FragData Parent;
+179c179
+< 		: FragData(frag) {
+---
+> 	: FragData(frag) {
+193,195c193,204
+<   virtual char chain() const {
+<     return chain_;
+<   }
+---
+> 	virtual char chain() const {
+> 		return chain_;
+> 	}
+> 
+> 	//SMK overloads
+> 	//might be overwritten to shortcut for continous changes
+> 	Size apply( kinematics::MoveMap const&, pose::Pose&, Size start, Size end ) const; // continous application to length residues
+> 	Size apply( kinematics::MoveMap const&, pose::Pose&, Frame const& ) const; //application to any set of residues specified by the Fr
+> 
+> 	//without movemap --- just apply the full fragment
+> 	Size apply( pose::Pose&, Frame const& ) const; //application to any set of residues specified by the Fr
+> 	Size apply( pose::Pose&, Size start, Size end ) const; // continous application to length residues
+198,203c207,212
+<   /// @brief common initialization routine
+<   void initialize(const std::string& pdb_id, char chain, Size start_pos) {
+<     pdbid_ = pdb_id;
+<     chain_ = chain;
+<     startpos_ = start_pos;
+<   }
+---
+> 	/// @brief common initialization routine
+> 	void initialize(const std::string& pdb_id, char chain, Size start_pos) {
+> 		pdbid_ = pdb_id;
+> 		chain_ = chain;
+> 		startpos_ = start_pos;
+> 	}
+208c217
+<   char chain_;
+---
+> 	char chain_;

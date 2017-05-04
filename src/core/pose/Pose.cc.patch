@@ -1,0 +1,79 @@
+102a103,108
+> 	AllowVariableInsertLength = true; //SMK
+> 	Pose_IsLeader = false; //SMK
+> 	window_start = 0; //SMK
+> 	move_start = 0; //SMK
+> 	move_end = 0; //SMK
+> 
+202a209,223
+> 	//SMK BEGIN
+> 	Pose_IsLeader = src.Pose_IsLeader;
+> 	AllowVariableInsertLength = src.AllowVariableInsertLength;
+> 	pdb_sources = src.pdb_sources;
+> 	pdb_source_res = src.pdb_source_res;
+> 	fraglength = src.fraglength;
+> 
+> 	//not sure if I should bother copying these...
+> 	window_start = src.window_start;
+> 	move_start = src.move_start;
+> 	move_end = src.move_end;
+> 	pdbid_with_chain_proposed = src.pdbid_with_chain_proposed;
+> 	pdb_start_resnum_proposed = src.pdb_start_resnum_proposed;
+> 	//SMK END
+> 
+1395a1417,1471
+> 
+> //SMK BEGIN
+> void
+> Pose::update_pdb_sources (std::string pdb_with_chain, int pdbresidue, Size move_start, Size move_end) {
+> 	//parameters: 	pdb_with_chain: concatenate pdbid and chain id. these are stored in AnnotatedFragData object when reading fragments
+> 	//				pdbresidue : is the STARTING residue number in the pdb template for the current window. Also stored in AnnotatedFragData.
+> 	//				move_start and move_end: in the case of var-length moves, these are the first and last residues in the current pose that are being moved.
+> 
+> 	//the current window_start is set in the pose. use this to work out the numbering. the value of pdbresidue will correspond to window_start.
+> 	if ( (move_start < window_start) || (move_end > (window_start+fraglength-1) ) ) {
+> 		std::cerr << "error: window_start is " << window_start << ", move_start is " << move_start << ", move_end is " << move_end << ". This is not good." << std::endl;
+> 		utility_exit_with_message("fail");
+> 	}
+> 
+> 	int const displace = move_start - window_start;
+> 
+> 	for (Size i = move_start; i <= move_end; i++) {
+> 		pdb_sources.at(i) = pdb_with_chain;
+> 		pdb_source_res.at(i) = pdbresidue + displace;
+> 	}
+> 
+> //	print_pdb_source_vectors(std::cout, true);
+> }
+> 
+> void
+> Pose::print_pdb_source_vectors(std::ostream & stream, bool const horizontal) {
+> 	if (horizontal){
+> 		stream << "SMK DEBUG: n_residue is " << n_residue() << std::endl;
+> 
+> 		stream << "SMK: resids:\t";
+> 		for (unsigned i=1; i<=n_residue(); i++) {
+> 			stream << i << "\t\t";
+> 		}
+> 		stream << std::endl;
+> 
+> 		stream << "SMK: pdbids:\t";
+> 		for (unsigned i=1; i<=n_residue(); i++) {
+> 			stream << pdb_sources.at(i) << "\t";
+> 		}
+> 		stream << std::endl;
+> 
+> 		stream << "SMK: pdbres:\t";
+> 		for (unsigned i=1; i<=n_residue(); i++) {
+> 			stream << pdb_source_res.at(i) << "\t\t";
+> 		}
+> 		stream << std::endl;
+> 	}
+> 	else {
+> 		stream << "residue\tpdbid\tpdb_resnum\n";
+> 		for (unsigned i=1; i<=n_residue(); i++) {
+> 			stream << i << "\t" << pdb_sources.at(i) << "\t" << pdb_source_res.at(i) << "\n";
+> 		}
+> 	}
+> }
+> //SMK END

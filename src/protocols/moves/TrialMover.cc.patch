@@ -1,0 +1,11 @@
+28a29,30
+> #include <MGFUtils/MGFGlobal.hh> //SMK
+> 
+163a166,172
+> 	using namespace MGFUtils;
+> 
+> 	//SMK do not go any further if the terminate bit has been set
+> 	if (MGFGlobal::terminate_bilevel_by_trial_count){
+> 		tr << "SMK: exit from TrialMover::apply due to bilevel terminate bit." << std::endl;
+> 		return;
+> 	}
