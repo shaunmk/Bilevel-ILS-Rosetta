@@ -1,5 +1,5 @@
 # Bilevel-ILS-Rosetta
-_Note: this page is a work in progress._
+_Note: this Readme is a work in progress._
 
 Patch for the AbinitioRelax application in the Rosetta macromolecular modelling suite. Implements bilevel optimisation and Iterated Local Search (ILS) for improved conformational sampling.
 
@@ -41,11 +41,25 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 	scons: done building targets.
 	```
 
-4. Test (TODO)
+4. Test
 
-	Sample input and output data are available in ```test/```. These were generated on a Linux system.
+	Sample inputs and outputs are available in ```test/```. These were generated on a Linux system.
 	
-	Modify ```options.txt``` to correctly indicate the paths to your patched ```rosetta_source``` and ```rosetta_database``` directories.
+	Modify ```test/inputs/options.txt``` to correctly indicate the paths to your patched ```rosetta_source``` and ```rosetta_database``` directories. Then run the patched executable:
+	
+	```sh
+	$ cd /path/to/Bilevel-ILS-Rosetta/test/inputs
+	$ /path/to/rosetta_source/bin/AbinitioRelax.default.linuxgccrelease @options.txt
+	```
+	
+	Note that the extension applied to the executable will depend on the system and compiler used. For example, on a Mac using clang it would be ```AbinitioRelax.default.macosclangrelease```. As far as I'm aware, there is no difference between the ```.default``` and non-```.default``` versions of the executable.
+
+### Other directories
+- The ```example``` directory   
+	This directory contains an example options file and a helper script that generates it. The settings in this options file are typical of a "production" run, and these settings were used for all results in our paper. The key difference between these settings and those in ```test/inputs/options.txt``` is the setting of the ```increase_cycles``` parameter.
+
+- The ```tools``` directory   
+	This directory contains the script used to make the patch files, and a list of all files that were added or modified relative to standard Rosetta. You can use the script if you want to make your own version of our protocols. You may need to modify paths defined therein.   
 
 ### Common issues
 By default, SCons will try to use whatever ```gcc``` refers to in your shell. On standard configurations of MacOS for example, this is usually Apple's LLVM compiler. To change the default, edit the file ```/path/to/rosetta_source/tools/build/basic.options```.
@@ -60,3 +74,6 @@ In this case, you will need to let SCons know about this version of GCC. Edit th
 I have only tested this on OSX versions <= 10.9.5, using rather old compilers (llvm-gcc-4.2). You will need to be prepared to use this (or similar) compiler as your system default ```gcc```. If you do not want this, it is still possible to use a compiler other than the system default, but you will need to edit the build configuration files in ```/path/to/rosetta_source/tools/build```. Please raise an issue and let me know if you are trying to do this.
 
 I did try to build with Apple's newer LLVM compilers (v6.0), but this did not work. I suspect it might be down to adjusting compiler options in ```/path/to/rosetta_source/tools/build/basic.settings``` - you may be able to get ideas from the version of this file in newer releases of Rosetta, which do work fine on up-to-date MacOS systems. All my production work was done on Linux with GCC, so this is just something I never spent much time on. Please let me know if you are able to get it to work!
+
+# TODO
+- Table with all newly defined command-line options, what they do and their defaults
