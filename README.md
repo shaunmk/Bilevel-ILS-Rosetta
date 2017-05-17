@@ -13,6 +13,8 @@ Patch for the AbinitioRelax application in the Rosetta macromolecular modelling 
 # IMPORTANT
 This patch modifies the source code for the AbinitioRelax application, as well as some core Rosetta classes. I have not tested and cannot guarantee functionality of other applications in the Rosetta suite after the patch has been applied. I recommend that you keep the patched source tree separate from any other installations of Rosetta that you might have.
 
+The ```rosetta_database/``` directory is not modified in any way, so you can keep a single copy of that.
+
 # Installation instructions
 1. Obtain Rosetta source distribution and database (version 3.4)
 
@@ -61,7 +63,7 @@ This patch modifies the source code for the AbinitioRelax application, as well a
 - The ```tools``` directory   
 	This directory contains the script used to make the patch files, and a list of all files that were added or modified relative to standard Rosetta. You can use the script if you want to make your own version of our protocols. You may need to modify paths defined therein.   
 
-### Common issues
+### Common issues with building
 By default, SCons will try to use whatever ```gcc``` refers to in your shell. On standard configurations of MacOS for example, this is usually Apple's LLVM compiler. To change the default, edit the file ```/path/to/rosetta_source/tools/build/basic.options```.
 
 Another common error when running SCons is e.g.
@@ -75,6 +77,23 @@ I have only tested this on OSX versions <= 10.9.5, using rather old compilers (l
 
 I did try to build with Apple's newer LLVM compilers (v6.0), but this did not work. I suspect it might be down to adjusting compiler options in ```/path/to/rosetta_source/tools/build/basic.settings``` - you may be able to get ideas from the version of this file in newer releases of Rosetta, which do work fine on up-to-date MacOS systems. All my production work was done on Linux with GCC, so this is just something I never spent much time on. Please let me know if you are able to get it to work!
 
-# TODO
+# Running
+Follow the approach in Step 4 of the Installation instructions. An example "production" version of the options file is given in the ```example/``` directory. To generate sets of 1000 decoys, we ran 100 independent runs of our protocols with these options, the key being ```-abinitio:increase_cycles 100```. This setup uses the same budget of function evaluations as 1000 runs of regular Rosetta AbinitioRelax with ```-abinitio:increase_cycles 10```.
+
+Please get in touch if you'd like a copy of the fragment sets we used.
+
+#### TODO
 - Table with all newly defined command-line options, what they do and their defaults
-- Known issues (e.g. nstruct must always be 1)
+
+# Known issues
+- The ```nstruct``` parameter must always be set to 1.   
+
+	Setting this parameter to anything greater than 1 will still _work_, but you will overwrite output files from prior iterations of the ```nstruct``` loop. In order to run the application many times to get a larger decoy set, I recommend running each run in a separate working directory.   
+	
+	The actual number of structures returned by the application is set when configuring the solution archiving strategy(ies) employed. This is done in the (admittedly mis-named) function ```MonteCarlo::create_archives_from_cmdline()``` in ```src/protocols/moves/MonteCarlo.cc```. My plan was eventually to introduce some sort of configuration file for this part of the application, so that users don't need to recompile everytime they want to try out a new configuration of archivers.
+
+- The commandline parameter ```-frags:annotate``` must (currently) always be provided.   
+
+	This option makes the application keep track of the source of the structural info (PDB template and residue numbers) for each residue in the structure, following each fragment insertion. Correctly implementing this was tricky and needed many edits to many files.
+
+
