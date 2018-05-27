@@ -80,7 +80,7 @@ I did try to build with Apple's newer LLVM compilers (v6.0), but this did not wo
 # Running
 Follow the approach in Step 4 of the Installation instructions. An example "production" version of the options file is given in the ```example/``` directory. To generate sets of 1000 decoys, we ran 100 independent runs of our protocols with these options, the key being ```-abinitio:increase_cycles 100```. This setup uses the same budget of function evaluations as 1000 runs of regular Rosetta AbinitioRelax with ```-abinitio:increase_cycles 10```.
 
-Please get in touch if you'd like a copy of the fragment sets we used.
+The fragment sets used in our paper can be found here: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1254031.svg)](https://doi.org/10.5281/zenodo.1254031)
 
 #### TODO
 - Table with all newly defined command-line options, what they do and their defaults
