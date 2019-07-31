@@ -86,9 +86,9 @@ In addition to the default energy-based archiving strategy, you can choose to us
 
 Once you have applied the bilevel-ILS patch to Rosetta, navigate to `/path/to/rosetta_source/src/protocols/moves/MonteCarlo.cc` and edit the (mis-named) function `MonteCarlo::create_archives_from_cmdline()`, using the examples provided in the comments there (see also Known Isuues below). Some archiver types have additional options, examples of which are also provided. Each archiver is added to a `std::vector < MGFUtils::MGFArchive >`, and has the prototype 
 
-`MGFUtils::MGFArchive(desired_size, max_size, archive_type, tag)`, where 
+`MGFUtils::MGFArchive(base_size, max_size, archive_type, tag)`, where 
 
-`desired_size` and `max_size` are `int`s that specify the desired and maximum number of structures in the archive, `archive_type` is one of a few predefined strings that selects the type of archiver, and `tag` is a string that is used to uniquely identify the specific archiver, and is appended to the filenames of the output structures. `tag` must be unique across all archivers. Some archivers can be configured with additional options, examples of these are given. An example is the 'rho' parameter for archives based on stochastic ranking, which can be set e.g. to 0.5 using
+`base_size` and `max_size` are `int`s that specify the base and maximum number of structures in the archive, `archive_type` is one of a few predefined strings that selects the type of archiver, and `tag` is a string that is used to uniquely identify the specific archiver, and is appended to the filenames of the output structures. `tag` must be unique across all archivers. Some archivers can be configured with additional options, examples of these are given. An example is the 'rho' parameter for archives based on stochastic ranking, which can be set e.g. to 0.5 using
 
 `Archives.back().set_SR_PROB(0.5);`
 
