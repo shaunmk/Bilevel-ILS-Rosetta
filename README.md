@@ -1,5 +1,4 @@
 # Bilevel-ILS-Rosetta
-_Note: this Readme is a work in progress._
 
 Patch for the AbinitioRelax application in the Rosetta macromolecular modelling suite. Implements bilevel optimisation and Iterated Local Search (ILS) for improved conformational sampling.
 
@@ -80,7 +79,25 @@ I did try to build with Apple's newer LLVM compilers (v6.0), but this did not wo
 # Running
 Follow the approach in Step 4 of the Installation instructions. An example "production" version of the options file is given in the ```example/``` directory. To generate sets of 1000 decoys, we ran 100 independent runs of our protocols with these options, the key being ```-abinitio:increase_cycles 100```. This setup uses the same budget of function evaluations as 1000 runs of regular Rosetta AbinitioRelax with ```-abinitio:increase_cycles 10```.
 
-The fragment sets used in our paper can be found here: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1254031.svg)](https://doi.org/10.5281/zenodo.1254031)
+The fragment sets used in our papers can be found here: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1254031.svg)](https://doi.org/10.5281/zenodo.1254031)
+
+# Configuring custom archivers
+In addition to the default energy-based archiving strategy, you can choose to use a couple of different archiving strategies for local minima. Two examples are the Stochastic Ranking-based archiver operating on contact maps (SRCM) and the Elitist Random (ER) archiver. For details on these archivers, consult Chapter 5 of my PhD thesis, which is available [here](https://www.research.manchester.ac.uk/portal/en/theses/on-conformational-sampling-in-fragmentbased-protein-structure-prediction(15b113b0-c389-4e8e-ae7c-d399e8a72b03).html). A paper based on this chapter is in preparation.
+
+Once you have applied the bilevel-ILS patch to Rosetta, navigate to `/path/to/rosetta_source/src/protocols/moves/MonteCarlo.cc` and edit the (mis-named) function `MonteCarlo::create_archives_from_cmdline()`, using the examples provided in the comments there (see also Known Isuues below). Some archiver types have additional options, examples of which are also provided. Each archiver is added to a `std::vector < MGFUtils::MGFArchive >`, and has the prototype 
+
+`MGFUtils::MGFArchive(desired_size, max_size, archive_type, tag)`, where 
+
+`desired_size` and `max_size` are `int`s that specify the desired and maximum number of structures in the archive, `archive_type` is one of a few predefined strings that selects the type of archiver, and `tag` is a string that is used to uniquely identify the specific archiver, and is appended to the filenames of the output structures. `tag` must be unique across all archivers. Some archivers can be configured with additional options, examples of these are given. An example is the 'rho' parameter for archives based on stochastic ranking, which can be set e.g. to 0.5 using
+
+`Archives.back().set_SR_PROB(0.5);`
+
+immediately after adding the archive.
+
+You'll notice that a few additional archivers are also implemented; feel free to experiment! Only the energy-based archiver is enabled by default. Once you've made your edits, you will need to recompile the codebase using the instructions above.
+
+# Citing
+If you find this repo useful, please cite our [paper in Scientific Reports](https://www.nature.com/articles/s41598-018-31891-8).
 
 #### TODO
 - Table with all newly defined command-line options, what they do and their defaults
@@ -90,7 +107,7 @@ The fragment sets used in our paper can be found here: [![DOI](https://zenodo.or
 
 	Setting this parameter to anything greater than 1 will still _work_, but you will overwrite output files from prior iterations of the ```nstruct``` loop. In order to run the application many times to get a larger decoy set, I recommend running each run in a separate working directory.   
 	
-	The actual number of structures returned by the application is set when configuring the solution archiving strategy(ies) employed. This is done in the (admittedly mis-named) function ```MonteCarlo::create_archives_from_cmdline()``` in ```src/protocols/moves/MonteCarlo.cc```. My plan was eventually to introduce some sort of configuration file for this part of the application, so that users don't need to recompile everytime they want to try out a new configuration of archivers.
+	The actual number of structures returned by the application is set when configuring the solution archiving strategy(ies) employed. This is done in the (admittedly mis-named) function ```MonteCarlo::create_archives_from_cmdline()``` in ```src/protocols/moves/MonteCarlo.cc```. My plan was eventually to introduce some sort of configuration file for this part of the application, so that users don't need to recompile everytime they want to try out a new configuration of archivers. Please raise an issue if this is something you'd find useful.
 
 - The commandline parameter ```-frags:annotate``` must (currently) always be provided.   
 
